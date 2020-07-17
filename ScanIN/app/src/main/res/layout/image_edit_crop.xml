@@ -48,6 +48,7 @@
         app:layout_constraintLeft_toRightOf="parent"
         android:elevation="10dp"
         android:gravity="center"
+        android:id="@+id/topLinearLayoutImageEditCrop"
         >
         <Button
             android:id="@+id/crop_back"
@@ -97,7 +98,8 @@
         app:layout_constraintLeft_toRightOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         android:elevation="10dp"
-        android:gravity="center">
+        android:gravity="center"
+        android:id="@+id/bottomLinearLayoutImageEditCrop" >
 
         <Button
             android:id="@+id/crop_auto_detect"
@@ -149,54 +151,34 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:background="#000"
         android:orientation="vertical"
-        android:weightSum="10"
+        app:layout_constraintTop_toBottomOf="@+id/topLinearLayoutImageEditCrop"
+        app:layout_constraintBottom_toTopOf="@+id/bottomLinearLayoutImageEditCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         tools:context="com.example.scanin.ScanActivity">
 
-        <FrameLayout
-            android:id="@+id/frameLayout"
+        <ImageView
+            android:id="@+id/cropImageView"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:layout_margin="10dp"
-            android:layout_weight="8">
+            android:adjustViewBounds="true" />
 
-            <FrameLayout
-                android:id="@+id/holderImageCrop"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:layout_margin="10dp"
-                android:background="@color/cardview_shadow_end_color">
-
-                <ImageView
-                    android:id="@+id/cropImageView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:adjustViewBounds="true" />
-            </FrameLayout>
-
-            <com.example.scanin.PolygonView
-                android:id="@+id/polygonView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center"
-                android:visibility="gone" />
-
-        </FrameLayout>
+        <com.example.scanin.PolygonView
+            android:id="@+id/polygonView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
 
     </LinearLayout>
 
-
-
-
-        <ProgressBar
+    <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="100dp"
-        />
+        android:padding="100dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>
