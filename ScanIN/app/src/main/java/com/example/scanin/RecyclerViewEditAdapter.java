@@ -119,8 +119,8 @@ public class RecyclerViewEditAdapter extends RecyclerView.Adapter<RecyclerViewEd
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
 //                Bitmap newBitmap = ImageData.changeContrastAndBrightness(bitmap, 1.5, imageInfo.getBeta());
                 Bitmap temp;
-                BrightnessFilterTransformation1 t1 = new BrightnessFilterTransformation1(context, (float) imageInfo.getBeta());
-                ContrastFilterTransformation1 t2 = new ContrastFilterTransformation1(context, (float) imageInfo.getAlpha());
+                BrightnessFilterTransformation1 t2 = new BrightnessFilterTransformation1(context, (float) imageInfo.getBeta());
+                ContrastFilterTransformation1 t1 = new ContrastFilterTransformation1(context, (float) imageInfo.getAlpha());
                 temp = t1.transform (bitmap);
                 temp = t2.transform (temp);
                 holder.imageView.setImageBitmap(temp);

@@ -513,8 +513,8 @@ public class ImageEditFragment extends Fragment {
                 View currentView = pagerSnapHelper.findSnapView(layoutManager);
                 if(currentView == null) return;
                 adapterPosition = layoutManager.getPosition(currentView);
-                int beta = (int) documentAndImageInfo.getImages().get(adapterPosition).getBeta();
-                brightnessBar.setProgress (beta);
+                float beta = (float) documentAndImageInfo.getImages().get(adapterPosition).getBeta();
+                brightnessBar.setProgress ((int) (beta * 100.0f));
             }
         });
 
@@ -528,7 +528,7 @@ public class ImageEditFragment extends Fragment {
                 if(currentView == null) return;
                 adapterPosition = layoutManager.getPosition(currentView);
                 float alpha = (float) documentAndImageInfo.getImages().get(adapterPosition).getAlpha();
-                brightnessBar.setProgress ((int) ((alpha - 2.0) * 50));
+                brightnessBar.setProgress ((int) ((alpha - 2.0) * 50.0f));
             }
         });
 
@@ -712,16 +712,10 @@ public class ImageEditFragment extends Fragment {
                 @Override
                 public void onBitmapLoaded(Bitmap bmp1, Picasso.LoadedFrom from) {
                     Bitmap newBitmap;
-                    if (imageEffectSelected == CONTRAST) {
-                        ContrastFilterTransformation1 t = new ContrastFilterTransformation1(getContext(), effectVal);
-                        newBitmap = t.transform (bmp1);
-                    } else if (imageEffectSelected == BRIGHTNESS) {
-                        BrightnessFilterTransformation1 t = new BrightnessFilterTransformation1(getContext(), effectVal);
-                        newBitmap = t.transform (bmp1);
-                    } else {
-                        newBitmap = bmp1;
-                        Log.e("Brightnsd", "contrast and brightness both not set.");
-                    }
+                    ContrastFilterTransformation1 t1 = new ContrastFilterTransformation1(getContext(), (float) imageInfo.getAlpha());
+                    BrightnessFilterTransformation1 t2 = new BrightnessFilterTransformation1(getContext(), (float) imageInfo.getBeta());
+                    newBitmap = t1.transform (bmp1);
+                    newBitmap = t2.transform (newBitmap);
                     temp.setImageBitmap(newBitmap);
                     Log.d("Brightnsd", String.valueOf(i));
                 }
