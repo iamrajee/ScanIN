@@ -1,13 +1,17 @@
 package com.example.scanin;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Rational;
@@ -34,6 +38,7 @@ import com.example.scanin.DatabaseModule.Document;
 import com.example.scanin.DatabaseModule.DocumentAndImageInfo;
 import com.example.scanin.DatabaseModule.ImageInfo;
 import com.example.scanin.DatabaseModule.Repository;
+import com.example.scanin.ImageDataModule.ImageData;
 import com.example.scanin.StateMachineModule.MachineActions;
 import com.example.scanin.StateMachineModule.MachineStates;
 import com.example.scanin.StateMachineModule.StateChangeHelper;
@@ -43,8 +48,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Objects;
@@ -85,6 +92,60 @@ public class ScanActivity extends AppCompatActivity
     private final CompositeDisposable disposable = new CompositeDisposable();
 
     public DocumentAndImageInfo documentAndImageInfo;
+    public int SELECT_PICTURES = 1234;
+
+    public void copyFile (File newFile, Uri galleryUri) {
+        try {
+            Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), galleryUri);
+            bmp = ImageData.rotateBitmap(bmp);
+            FileOutputStream outputStream = new FileOutputStream(newFile);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.e("ScanActivity", e.getMessage());
+        }
+    }
+
+    // It makes more sense to use a custom gallery, maybe next version.
+    // https://github.com/mitchtabian/Android-Instagram-Clone/blob/master/app/src/main/java/tabian/com/instagramclone2/Share/PhotoFragment.java
+    // https://stackoverflow.com/questions/38457497/instagram-like-scroll-in-custom-gallery
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == SELECT_PICTURES) {
+            if(resultCode == Activity.RESULT_OK) {
+                if(data.getClipData() != null) {
+                    int count = data.getClipData().getItemCount(); //evaluate the count before the for loop --- otherwise, the count is evaluated every loop.
+                    for(int i = 0; i < count; i++) {
+                        Uri imageUri = data.getClipData().getItemAt(i).getUri();
+
+                        File photoFile = new File(
+                                outputDirectory, new SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis()) + "_"
+                                + String.valueOf(i) + ".jpg");
+                        try {
+                            photoFile.createNewFile();
+                            copyFile(photoFile, imageUri);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Log.e ("ScanActivity", e.getMessage());
+                        }
+
+                        Uri savedUri = Uri.fromFile(photoFile);
+                        long position = 0;
+                        if(documentAndImageInfo != null) position = documentAndImageInfo.getImages().size();
+                        if (i == count - 1) {
+                            saveImageInfo(savedUri, position, true);
+                        } else {
+                            saveImageInfo(savedUri, position, false);
+                        }
+                    }
+                }
+            } else if(data.getData() != null) {
+                String imagePath = data.getData().getPath();
+                //do something with the image (save it to some directory or whatever you need to do with it here)
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +159,7 @@ public class ScanActivity extends AppCompatActivity
 
         imageGridFragment = new ImageGridFragment();
         imageEditFragment = new ImageEditFragment();
+
         cameraProviderFuture = ProcessCameraProvider.getInstance((Context)this);
         outputDirectory = getOutputDirectory();
         appDatabase = AppDatabase.getInstance(this);
@@ -123,6 +185,17 @@ public class ScanActivity extends AppCompatActivity
             public void onClick(View view) {
                 view.setClickable(false);
                 StateChangeHelper.CameraActionChange(MachineActions.CAMERA_EDIT_GRID, ScanActivity.this);
+            }
+        });
+
+        findViewById(R.id.add_photo).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(Intent.createChooser(intent,"Select Picture"), SELECT_PICTURES);
             }
         });
 
@@ -211,7 +284,7 @@ public class ScanActivity extends AppCompatActivity
                         Log.d("CameraSaved","Called");
                         long position = 0;
                         if(documentAndImageInfo != null) position = documentAndImageInfo.getImages().size();
-                        saveImageInfo(savedUri, position);
+                        saveImageInfo(savedUri, position, true);
                     }
 
                     @Override
@@ -320,7 +393,7 @@ public class ScanActivity extends AppCompatActivity
         }));
     }
 
-    public void saveImageInfo(Uri uri, long position) {
+    public void saveImageInfo(Uri uri, long position, boolean editMode) {
         if (current_document_id != -1) {
             disposable.add(Single.create(s -> {
                 ImageInfo imageInfo = new ImageInfo(current_document_id, uri, position);
@@ -331,7 +404,9 @@ public class ScanActivity extends AppCompatActivity
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(s->{
                 documentAndImageInfo.images.add((ImageInfo) s);
-                StateChangeHelper.CameraActionChange(MachineActions.CAMERA_CAPTURE_PHOTO, ScanActivity.this);
+                if (editMode) {
+                    StateChangeHelper.CameraActionChange(MachineActions.CAMERA_CAPTURE_PHOTO, ScanActivity.this);
+                }
             }, Throwable::printStackTrace));
         }
         else{
@@ -347,7 +422,9 @@ public class ScanActivity extends AppCompatActivity
             .subscribe(s->{
                 documentAndImageInfo = (DocumentAndImageInfo) s;
                 current_document_id = documentAndImageInfo.getDocument().getDocumentId();
-                StateChangeHelper.CameraActionChange(MachineActions.CAMERA_CAPTURE_PHOTO, ScanActivity.this);
+                if (editMode) {
+                    StateChangeHelper.CameraActionChange(MachineActions.CAMERA_CAPTURE_PHOTO, ScanActivity.this);
+                }
             }, Throwable::printStackTrace));
         }
     }
