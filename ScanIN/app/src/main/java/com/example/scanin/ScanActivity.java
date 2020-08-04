@@ -53,6 +53,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -116,6 +118,8 @@ public class ScanActivity extends AppCompatActivity
             if(resultCode == Activity.RESULT_OK) {
                 if(data.getClipData() != null) {
                     int count = data.getClipData().getItemCount(); //evaluate the count before the for loop --- otherwise, the count is evaluated every loop.
+                    List<Uri> uri_list = new LinkedList<>();
+
                     for(int i = 0; i < count; i++) {
                         Uri imageUri = data.getClipData().getItemAt(i).getUri();
 
@@ -130,15 +134,13 @@ public class ScanActivity extends AppCompatActivity
                             Log.e ("ScanActivity", e.getMessage());
                         }
 
-                        Uri savedUri = Uri.fromFile(photoFile);
-                        long position = 0;
-                        if(documentAndImageInfo != null) position = documentAndImageInfo.getImages().size();
-                        if (i == count - 1) {
-                            saveImageInfo(savedUri, position, true);
-                        } else {
-                            saveImageInfo(savedUri, position, false);
-                        }
+                        uri_list.add(Uri.fromFile(photoFile));
                     }
+                    int position = 0;
+                    if (documentAndImageInfo != null) {
+                        position = documentAndImageInfo.getImages().size();
+                    }
+                    saveImageInfo(uri_list, position);
                 }
             } else if(data.getData() != null) {
                 String imagePath = data.getData().getPath();
@@ -393,7 +395,35 @@ public class ScanActivity extends AppCompatActivity
         }));
     }
 
-    public void saveImageInfo(Uri uri, long position, boolean editMode) {
+    public void saveImageInfo (List <Uri> uri_list, long position) {
+        if (current_document_id != -1) {
+            int cnt = uri_list.size();
+            for (int i = 0; i < cnt; i++) {
+                saveImageInfo(uri_list.get(i), position + i, (boolean) (i == cnt - 1));
+            }
+        }
+        else{
+            disposable.add(Single.create(s->{
+                Document document = createDocument();
+                Log.d(TAG, "new_doc_saved");
+                ImageInfo imageInfo = new ImageInfo(document.getDocumentId(), uri_list.get(0), position);
+                saveImageInfoHelper(imageInfo);
+                s.onSuccess(new DocumentAndImageInfo(document, imageInfo));
+            })
+                    .subscribeOn(Schedulers.single())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(s->{
+                        documentAndImageInfo = (DocumentAndImageInfo) s;
+                        current_document_id = documentAndImageInfo.getDocument().getDocumentId();
+                        int cnt = uri_list.size();
+                        for (int i = 1; i < cnt; i++) {
+                            saveImageInfo(uri_list.get(i), position + i, (boolean) (i == cnt - 1));
+                        }
+                    }, Throwable::printStackTrace));
+        }
+    }
+
+    public void saveImageInfo(Uri uri, long position, boolean edit_mode) {
         if (current_document_id != -1) {
             disposable.add(Single.create(s -> {
                 ImageInfo imageInfo = new ImageInfo(current_document_id, uri, position);
@@ -404,9 +434,8 @@ public class ScanActivity extends AppCompatActivity
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(s->{
                 documentAndImageInfo.images.add((ImageInfo) s);
-                if (editMode) {
+                if (edit_mode)
                     StateChangeHelper.CameraActionChange(MachineActions.CAMERA_CAPTURE_PHOTO, ScanActivity.this);
-                }
             }, Throwable::printStackTrace));
         }
         else{
@@ -422,9 +451,8 @@ public class ScanActivity extends AppCompatActivity
             .subscribe(s->{
                 documentAndImageInfo = (DocumentAndImageInfo) s;
                 current_document_id = documentAndImageInfo.getDocument().getDocumentId();
-                if (editMode) {
+                if (edit_mode)
                     StateChangeHelper.CameraActionChange(MachineActions.CAMERA_CAPTURE_PHOTO, ScanActivity.this);
-                }
             }, Throwable::printStackTrace));
         }
     }
