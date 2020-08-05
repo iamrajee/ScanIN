@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -39,6 +40,7 @@ import com.example.scanin.DatabaseModule.DocumentAndImageInfo;
 import com.example.scanin.DatabaseModule.ImageInfo;
 import com.example.scanin.DatabaseModule.Repository;
 import com.example.scanin.ImageDataModule.ImageData;
+import com.example.scanin.ImageDataModule.ImageEditUtil;
 import com.example.scanin.StateMachineModule.MachineActions;
 import com.example.scanin.StateMachineModule.MachineStates;
 import com.example.scanin.StateMachineModule.StateChangeHelper;
@@ -98,10 +100,20 @@ public class ScanActivity extends AppCompatActivity
 
     public void copyFile (File newFile, Uri galleryUri) {
         try {
-            Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), galleryUri);
-            bmp = ImageData.rotateBitmap(bmp);
+            Bitmap bmp = ImageEditUtil.loadBitmap(this, galleryUri);
+            //Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), galleryUri);
+            bmp = ImageData.rotateBitmap(bmp, 270f);
             FileOutputStream outputStream = new FileOutputStream(newFile);
+            // significant speed loss in PNG
             bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            bmp.recycle();
+
+            ExifInterface newExif = new ExifInterface(newFile.getAbsolutePath());
+            newExif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(ExifInterface.ORIENTATION_ROTATE_90));
+            newExif.saveAttributes();
+
         } catch (Exception e) {
             e.printStackTrace();
             Log.e("ScanActivity", e.getMessage());

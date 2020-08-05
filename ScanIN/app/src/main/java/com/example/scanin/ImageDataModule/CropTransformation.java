@@ -40,7 +40,7 @@ public class CropTransformation implements Transformation {
             Log.d("Transformation", "crop transformation code used.");
             float scale = getScale(width, height);
             cropPoints = scalePoints(cropPoints, scale);
-            Mat imgToProcess = new Mat();
+            Mat imgToProcess = new Mat(bitmap.getWidth(), bitmap.getHeight(), CvType.CV_8UC(4));
             Utils.bitmapToMat(bitmap, imgToProcess);
             Mat outMat = new Mat();
             Mat pts = new Mat(4, 2, CvType.CV_16U);

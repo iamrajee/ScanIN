@@ -1,11 +1,21 @@
 package com.example.scanin.ImageDataModule;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.ImageDecoder;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.media.ExifInterface;
 import android.media.Image;
+import android.net.Uri;
+import android.os.Build;
+import android.provider.MediaStore;
+import android.util.Log;
 
 import org.opencv.core.Point;
 
@@ -145,6 +155,45 @@ public class ImageEditUtil {
         res.put (3, new PointF (height - points.get(1).y, points.get(1).x));
         return res;
     }
+
+    private static final String[] CONTENT_ORIENTATION = new String[] {
+            MediaStore.Images.ImageColumns.ORIENTATION
+    };
+
+    protected static int getExifOrientation(Context context, Uri uri) {
+        Cursor cursor = null;
+        try {
+            ContentResolver contentResolver = context.getContentResolver();
+            cursor = contentResolver.query(uri, CONTENT_ORIENTATION, null, null, null);
+            if (cursor == null || !cursor.moveToFirst()) {
+                return 0;
+            }
+            return cursor.getInt(0);
+        } catch (RuntimeException ignored) {
+            // If the orientation column doesn't exist, assume no rotation.
+            return 0;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public static Bitmap loadBitmap (Context context, Uri fileName) {
+        Bitmap temp = null;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                Log.d("loadingImages", "api above P");
+                temp = ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.getContentResolver(), fileName));
+            } else {
+                temp = MediaStore.Images.Media.getBitmap(context.getContentResolver(), fileName);
+                Log.d("loadingImages", "api below P");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return temp;
+    };
 
     public static native void getTestGray (long imgAddr, long grayImgAddr);
 

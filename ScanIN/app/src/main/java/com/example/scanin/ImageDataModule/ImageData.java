@@ -2,12 +2,14 @@ package com.example.scanin.ImageDataModule;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 
 import android.graphics.Paint;
+import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
@@ -117,6 +119,12 @@ public class ImageData {
     public void setOriginalBitmap(Context context) throws IOException {
         try {
             this.originalBitmap =  MediaStore.Images.Media.getBitmap(context.getContentResolver() , fileName);
+            // As of now using the below commented code is giving me error related to size of bitmap.
+            // OpenCV(4.2.0) Error: Assertion failed (AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0) in Java_org_opencv_android_Utils_nBitmapToMat2, file /build/master_pack-android/opencv/modules/java/generator/src/cpp/utils.cpp, line 38
+            //2020-08-05 21:54:12.957 23053-23053/com.example.scanin E/org.opencv.android.Utils: nBitmapToMat caught cv::Exception: OpenCV(4.2.0) /build/master_pack-android/opencv/modules/java/generator/src/cpp/utils.cpp:38: error: (-215:Assertion failed) AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0 in function 'Java_org_opencv_android_Utils_nBitmapToMat2'
+            //2020-08-05 21:54:12.968 23053-23053/com.example.scanin A/libc: Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x18
+            //this.originalBitmap = ImageEditUtil.loadBitmap(context, this.fileName);
+
             this.originalBitmap = ImageData.rotateBitmap(this.originalBitmap);
             this.originalBitmap = getResizedBitmap(this.originalBitmap, MAX_SIZE);
             this.croppedBitmap = originalBitmap;
@@ -219,7 +227,9 @@ public class ImageData {
     // cropped is applied on originalBitmap and saved in croppedBitmap
     public void applyCropImage () {
         if (originalBitmap != null && cropPosition != null) {
-            Mat imgToProcess = new Mat();
+            //Mat imgToProcess = new Mat();
+            Mat imgToProcess = new Mat(originalBitmap.getWidth(), originalBitmap.getHeight(), CvType.CV_8UC(4));
+
             Utils.bitmapToMat(originalBitmap, imgToProcess);
             Mat outMat = new Mat();
             Mat pts = new Mat(4, 2, CvType.CV_16U);
@@ -263,7 +273,7 @@ public class ImageData {
     public ArrayList <Point> getBestPoints () {
         ArrayList <Point> res = new ArrayList<Point>();
         if (originalBitmap != null) {
-            Mat imgToProcess = new Mat();
+            Mat imgToProcess = new Mat(originalBitmap.getWidth(), originalBitmap.getHeight(), CvType.CV_8UC(4));
             Utils.bitmapToMat(originalBitmap, imgToProcess);
             Mat pts = new Mat(4, 2, CvType.CV_16U);
             pts.setTo(new Scalar(-1));
