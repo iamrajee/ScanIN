@@ -2,6 +2,7 @@ package com.example.scanin;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -118,6 +119,10 @@ public class ScanActivity extends AppCompatActivity
             e.printStackTrace();
             Log.e("ScanActivity", e.getMessage());
         }
+    }
+
+    public Repository getRepository () {
+        return this.repository;
     }
 
     // It makes more sense to use a custom gallery, maybe next version.
@@ -366,12 +371,18 @@ public class ScanActivity extends AppCompatActivity
 
     public void editDeleteImageCallback(int position){
         ImageInfo tempImageInfo = documentAndImageInfo.getImages().get(position);
+        deleteImageFromFile(tempImageInfo.getUri());
         documentAndImageInfo.getImages().remove(position);
         imageEditFragment.setImagePathList(documentAndImageInfo);
         if(documentAndImageInfo.getImages().size() <= 1){
             repository.deleteDocument(documentAndImageInfo.getDocument());
         }
         else repository.deleteImage(tempImageInfo);
+    }
+
+    public void renameDoc (Document document, String new_name) {
+        document.setDocumentName(new_name);
+        repository.updateDocument(document, disposable);
     }
 
     @Override
@@ -476,7 +487,10 @@ public class ScanActivity extends AppCompatActivity
     public Document createDocument(){
         String document_name = "Unname101";
         long id = appDatabase.documentDao().insertDocument(new Document(document_name));
-        return new Document(id, documentName);
+        documentName = "doc_" + id;
+        Document document = new Document(id, documentName);
+        renameDoc(document, documentName);
+        return document;
     }
 
     public void readDocumentImages(long id){
@@ -494,6 +508,19 @@ public class ScanActivity extends AppCompatActivity
     }
 
     public void updateImageInFile(Uri uri, Bitmap bitmap){
+        /*
+         bmp = ImageData.rotateBitmap(bmp, 270f);
+            FileOutputStream outputStream = new FileOutputStream(newFile);
+            // significant speed loss in PNG
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            outputStream.flush();
+            outputStream.close();
+            bmp.recycle();
+
+            ExifInterface newExif = new ExifInterface(newFile.getAbsolutePath());
+            newExif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(ExifInterface.ORIENTATION_ROTATE_90));
+            newExif.saveAttributes();
+         */
         File file = new File(Objects.requireNonNull(uri.getPath()));
         if(!file.exists()) return;
         try (FileOutputStream out = new FileOutputStream(file)) {
@@ -503,9 +530,11 @@ public class ScanActivity extends AppCompatActivity
         }
     }
 
-    public boolean deleteImageFromFile(Uri uri, Bitmap bitmap){
+    public boolean deleteImageFromFile(Uri uri){
         File file = new File(Objects.requireNonNull(uri.getPath()));
+        Log.d ("ImageDelete", "delete " + uri.getPath());
         if (file.exists()) {
+            Log.d("ImageDelete", "deleteHappened");
             return file.delete();
         }
         else return true;

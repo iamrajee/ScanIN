@@ -27,6 +27,7 @@ import com.example.scanin.R;
 import com.example.scanin.ScanActivity;
 import com.example.scanin.StateMachineModule.MachineActions;
 import com.example.scanin.StateMachineModule.MachineStates;
+import com.example.scanin.Utils.FileUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
@@ -150,9 +151,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         alert.setPositiveButton("Rename", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 String new_name = edittext.getText().toString();
-                Document document = documentPreview.getDocument();
-                document.setDocumentName(new_name);
-                homeViewModel.updateDoc(document);
+                if (FileUtils.validateFileName(new_name)) {
+                    Document document = documentPreview.getDocument();
+                    document.setDocumentName(new_name);
+                    homeViewModel.updateDoc(document);
+                } else {
+                    Toast.makeText(getApplicationContext(),
+                            "Allowed characters A-Z, a-z, 0-9, _ and must start with a-z or A-Z", Toast.LENGTH_SHORT)
+                            .show();
+                }
             }
         });
 

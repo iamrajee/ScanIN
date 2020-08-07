@@ -2,10 +2,14 @@ package com.example.scanin.DatabaseModule;
 
 import android.app.Application;
 import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 
+import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 import io.reactivex.Completable;
 import io.reactivex.Scheduler;
@@ -118,5 +122,27 @@ public class Repository {
 
     public LiveData<List<DocumentPreview>> getDocsPreview(){
         return mDocPreview;
+    }
+
+    public void deleteImagesForDocument (long document_id) {
+        Completable.create(s->{
+            DocumentAndImageInfo documentAndImageInfo = documentAndImageDao.loadDocumentAllImageInfo(document_id);
+            List <ImageInfo> imgInfoList = documentAndImageInfo.getImages();
+            for (int i = 0; i < imgInfoList.size(); i++) {
+                deleteImageFromFile(imgInfoList.get(i).getUri());
+            }
+            s.onComplete();
+        }).subscribeOn(Schedulers.io())
+                .subscribe();
+    }
+
+    public boolean deleteImageFromFile(Uri uri){
+        File file = new File(Objects.requireNonNull(uri.getPath()));
+        Log.d ("ImageDelete", "delete " + uri.getPath());
+        if (file.exists()) {
+            Log.d("ImageDelete", "deleteHappened");
+            return file.delete();
+        }
+        else return true;
     }
 }

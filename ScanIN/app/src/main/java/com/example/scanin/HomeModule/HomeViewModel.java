@@ -1,15 +1,21 @@
 package com.example.scanin.HomeModule;
 
 import android.app.Application;
+import android.net.Uri;
+import android.util.Log;
 
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
 import com.example.scanin.DatabaseModule.Document;
+import com.example.scanin.DatabaseModule.DocumentAndImageInfo;
 import com.example.scanin.DatabaseModule.DocumentPreview;
+import com.example.scanin.DatabaseModule.ImageInfo;
 import com.example.scanin.DatabaseModule.Repository;
 
+import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 import io.reactivex.disposables.CompositeDisposable;
 
@@ -30,6 +36,7 @@ public class HomeViewModel extends AndroidViewModel {
     }
 
     void deleteDoc(DocumentPreview documentPreview){
+        mRepository.deleteImagesForDocument (documentPreview.getDocument().getDocumentId());
         mRepository.deleteDocument(documentPreview.getDocument());
     }
 
