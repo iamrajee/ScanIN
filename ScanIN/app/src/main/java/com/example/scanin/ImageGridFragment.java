@@ -1,19 +1,30 @@
 package com.example.scanin;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.scanin.DatabaseModule.Document;
 import com.example.scanin.DatabaseModule.DocumentAndImageInfo;
+import com.example.scanin.DatabaseModule.Repository;
 import com.example.scanin.StateMachineModule.MachineActions;
+import com.example.scanin.Utils.FileUtils;
+
+import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -34,6 +45,7 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
     private DocumentAndImageInfo documentAndImageInfo;
     RecyclerViewGridAdapter mAdapter = null;
     int CurrentMachineState = -1;
+    private Repository mRepository;
 
     public ImageGridFragment() {
         // Required empty public constructor
@@ -102,12 +114,61 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
         mAdapter = new RecyclerViewGridAdapter(documentAndImageInfo, this);
         recyclerView.setAdapter(mAdapter);
         imageGridFragmentCallback.onCreateGridCallback();
+        TextView fileName = rootView.findViewById(R.id.file_name_edit);
+        fileName.setText(documentAndImageInfo.getDocument().getDocumentName());
 
         rootView.findViewById(R.id.grid_add).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 rootView.setClickable(false);
                 imageGridFragmentCallback.onClickGridCallback(MachineActions.GRID_ADD_SCAN, null);
+            }
+        });
+
+        rootView.findViewById(R.id.grid_save).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //imageGridFragmentCallback.onClickGridCallback(MachineActions.GRID_ON_SAVE, null);
+                AlertDialog.Builder alert = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustom);
+
+                final EditText edittext = new EditText(getContext());
+                edittext.setTextColor(getResources().getColor(R.color.black));
+                edittext.setText(documentAndImageInfo.getDocument().getDocumentName());
+
+                TextView textView = new TextView(getContext());
+                textView.setText("Enter Name");
+                textView.setPadding(20, 30, 20, 30);
+                textView.setTextSize(20F);
+                textView.setTextColor(Color.BLACK);
+                alert.setCustomTitle(textView);
+
+                alert.setView(edittext);
+
+                alert.setPositiveButton("Rename", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        String new_name = edittext.getText().toString();
+                        if (FileUtils.validateFileName(new_name)) {
+                            Document document = documentAndImageInfo.getDocument();
+                            ((ScanActivity) Objects.requireNonNull(getActivity())).renameDoc(document, new_name);
+
+                            //document.setDocumentName(new_name);
+                            //homeViewModel.updateDoc(document);
+
+                        } else {
+                            Toast.makeText(getContext(),
+                                    "Allowed characters A-Z, a-z, 0-9, _ and must start with a-z or A-Z", Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    }
+                });
+
+                alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        // what ever you want to do with No option.
+                    }
+                });
+
+                alert.show();
             }
         });
 
@@ -124,6 +185,7 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
     @Override
     public void onDestroyView() {
         Log.d("Scan-Activity2", "imageFragmentDestroyed");
+
         super.onDestroyView();
     }
 
