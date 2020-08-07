@@ -99,7 +99,7 @@ public class Repository {
 
     public void updateImage(ImageInfo imageInfo){
         Completable.create(s->{
-            imageInfoDao.insertImageInfo(imageInfo);
+            imageInfoDao.updateImageInfo(imageInfo);
         }).subscribeOn(update_image_thread)
           .subscribe();
     }

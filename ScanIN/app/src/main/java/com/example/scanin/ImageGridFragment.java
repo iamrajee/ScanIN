@@ -115,7 +115,8 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
         recyclerView.setAdapter(mAdapter);
         imageGridFragmentCallback.onCreateGridCallback();
         TextView fileName = rootView.findViewById(R.id.file_name_edit);
-        fileName.setText(documentAndImageInfo.getDocument().getDocumentName());
+        if (documentAndImageInfo != null)
+            fileName.setText(documentAndImageInfo.getDocument().getDocumentName());
 
         rootView.findViewById(R.id.grid_add).setOnClickListener(new View.OnClickListener() {
             @Override
