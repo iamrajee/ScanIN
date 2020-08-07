@@ -576,6 +576,10 @@ public class ImageEditFragment extends Fragment {
                     imageEffectsView.setVisibility(View.GONE);
                     barContainer.setVisibility(View.GONE);
                 } else {
+                    if (filterVisible) {
+                        filterVisible = false;
+                        filter_scroll_view.setVisibility(View.GONE);
+                    }
                     imageEffectsView.setVisibility(View.VISIBLE);
                     imageEffectsBtns.setVisibility(View.VISIBLE);
                     barContainer.setVisibility(View.GONE);
@@ -649,6 +653,11 @@ public class ImageEditFragment extends Fragment {
                     filterVisible = false;
                     filter_scroll_view.setVisibility(View.GONE);
                 } else {
+                    if (bacVisible) {
+                        bacVisible = false;
+                        imageEffectsView.setVisibility(View.GONE);
+                        barContainer.setVisibility(View.GONE);
+                    }
                     filter_scroll_view.setVisibility(View.VISIBLE);
                     View currentView = pagerSnapHelper.findSnapView(layoutManager);
                     if(currentView == null) return;
