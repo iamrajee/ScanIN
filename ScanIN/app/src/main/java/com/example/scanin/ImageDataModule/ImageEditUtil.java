@@ -20,6 +20,7 @@ import android.util.Log;
 import org.opencv.core.Point;
 
 import java.io.ByteArrayOutputStream;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,6 +105,14 @@ public class ImageEditUtil {
         return res;
     }
 
+    public static ArrayList <Point> scalePoints (ArrayList <Point> pts, float scale) {
+        ArrayList <Point> res = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            res.add (new Point (pts.get(i).x * scale, pts.get(i).y * scale));
+        }
+        return res;
+    }
+
     public static float getScale (int width, int height) {
         float fx = (float) width / ImageData.MAX_SIZE;;
         float fy = (float) height / ImageData.MAX_SIZE;
@@ -153,6 +162,18 @@ public class ImageEditUtil {
         res.put (1, new PointF (height - points.get(0).y, points.get(0).x));
         res.put (2, new PointF (height - points.get(3).y, points.get(3).x));
         res.put (3, new PointF (height - points.get(1).y, points.get(1).x));
+        return res;
+    }
+
+    public static ArrayList <Point> rotateCropPoints (ArrayList <Point> points, int width, int height, int rotationConfig) {
+        ArrayList <Point> res = new ArrayList<>();
+        if (rotationConfig == 1 || rotationConfig == 3) {
+            height = width;
+        }
+        for (int i = 0; i < 4; i++) {
+            int j = (i + 3) % 4;
+            res.add (new Point (height - points.get(j).y, points.get(j).x));
+        }
         return res;
     }
 

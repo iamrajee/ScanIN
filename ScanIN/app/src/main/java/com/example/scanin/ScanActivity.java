@@ -47,8 +47,9 @@ import com.example.scanin.StateMachineModule.MachineStates;
 import com.example.scanin.StateMachineModule.StateChangeHelper;
 import com.example.scanin.StateMachineModule.StateMachine;
 import com.google.common.util.concurrent.ListenableFuture;
-
+import com.example.scanin.Utils.FileUtils;
 import org.jetbrains.annotations.NotNull;
+import org.opencv.android.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -99,28 +100,6 @@ public class ScanActivity extends AppCompatActivity
     public DocumentAndImageInfo documentAndImageInfo;
     public int SELECT_PICTURES = 1234;
 
-    public void copyFile (File newFile, Uri galleryUri) {
-        try {
-            Bitmap bmp = ImageEditUtil.loadBitmap(this, galleryUri);
-            //Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), galleryUri);
-            bmp = ImageData.rotateBitmap(bmp, 270f);
-            FileOutputStream outputStream = new FileOutputStream(newFile);
-            // significant speed loss in PNG
-            bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-            outputStream.flush();
-            outputStream.close();
-            bmp.recycle();
-
-            ExifInterface newExif = new ExifInterface(newFile.getAbsolutePath());
-            newExif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(ExifInterface.ORIENTATION_ROTATE_90));
-            newExif.saveAttributes();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e("ScanActivity", e.getMessage());
-        }
-    }
-
     public Repository getRepository () {
         return this.repository;
     }
@@ -145,7 +124,7 @@ public class ScanActivity extends AppCompatActivity
                                 + String.valueOf(i) + ".jpg");
                         try {
                             photoFile.createNewFile();
-                            copyFile(photoFile, imageUri);
+                            FileUtils.copyFile(this, photoFile, imageUri);
                         } catch (Exception e) {
                             e.printStackTrace();
                             Log.e ("ScanActivity", e.getMessage());

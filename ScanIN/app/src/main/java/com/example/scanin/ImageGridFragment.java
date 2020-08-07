@@ -157,7 +157,7 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
 
                         } else {
                             Toast.makeText(getContext(),
-                                    "Allowed characters A-Z, a-z, 0-9, _ and must start with a-z or A-Z", Toast.LENGTH_SHORT)
+                                    "Allowed characters A-Z, a-z, 0-9, _, -", Toast.LENGTH_LONG)
                                     .show();
                         }
                     }

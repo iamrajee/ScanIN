@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageButton btnSavePicture;
     private ImageView capturePreview;
     private static final int REQUEST_CODE_PERMISSIONS = 10;
-    private static final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA"};
+    private static final String[] REQUIRED_PERMISSIONS = new String[]{"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
 
     private HomeViewModel homeViewModel;
 
@@ -157,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     homeViewModel.updateDoc(document);
                 } else {
                     Toast.makeText(getApplicationContext(),
-                            "Allowed characters A-Z, a-z, 0-9, _ and must start with a-z or A-Z", Toast.LENGTH_SHORT)
+                            "Allowed characters A-Z, a-z, 0-9, _, - ", Toast.LENGTH_LONG)
                             .show();
                 }
             }

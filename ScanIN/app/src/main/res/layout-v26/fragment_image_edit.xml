@@ -50,6 +50,18 @@
             app:layout_constraintRight_toRightOf="@+id/verticalGuidelineRight"
             app:layout_constraintTop_toTopOf="@+id/horizontalGuidelineBottom" />
 
+        <ImageButton
+            android:id="@+id/save_in_gallery"
+            android:contentDescription="save photo in gallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:elevation="5dp"
+            android:src="@drawable/ic_save_photo_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toRightOf="@+id/verticalGuidelineLeft"
+            app:layout_constraintTop_toTopOf="@+id/horizontalGuidelineBottom" />
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"

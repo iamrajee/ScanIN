@@ -47,8 +47,8 @@ public class ImageData {
 
     // These values correspond to current Bitmap just after it was loaded and rotated in
     // in its correct configuration.
-    private int origWidth;
-    private int origHeight;
+    private int loadWidth;
+    private int loadHeight;
     public static int MAX_SIZE=1500;
 
     public ImageData(Uri uri) {
@@ -91,7 +91,7 @@ public class ImageData {
 
     public void setOriginalBitmap(Bitmap originalBitmap) {
         this.originalBitmap = originalBitmap;
-        // Intentionally not updating origWidth and origHeight.
+        // Intentionally not updating loadWidth and loadHeight.
     }
 
     public void setCurrentBitmap (Bitmap currentBitmap) {
@@ -159,8 +159,8 @@ public class ImageData {
 
             this.originalBitmap = ImageData.rotateBitmap(this.originalBitmap);
             this.currentBitmap = getResizedBitmap(this.originalBitmap, MAX_SIZE);
-            this.origHeight = this.currentBitmap.getHeight();
-            this.origWidth = this.currentBitmap.getWidth();
+            this.loadHeight = this.currentBitmap.getHeight();
+            this.loadWidth = this.currentBitmap.getWidth();
         } catch (Exception e){
             throw e;
         }
@@ -186,11 +186,19 @@ public class ImageData {
     }
 
     public int getWidth() {
-        return origWidth;
+        return loadWidth;
     }
 
     public int getHeight() {
-        return origHeight;
+        return loadHeight;
+    }
+
+    public int getOriginalWidth () {
+        return originalBitmap.getWidth();
+    }
+
+    public int getOriginalHeight() {
+        return originalBitmap.getHeight();
     }
 
     public void rotateCropPosition () {
@@ -252,8 +260,8 @@ public class ImageData {
     }
 
     public static Bitmap applyFilter (Bitmap bitmap, String filterName) {
-        if (ImageEditUtil.isValidFilter(filterName)) {
-            Mat imgToProcess = new Mat();
+        if (bitmap != null && ImageEditUtil.isValidFilter(filterName)) {
+            Mat imgToProcess = new Mat(bitmap.getWidth(), bitmap.getHeight(), CvType.CV_8UC(4));
             Utils.bitmapToMat(bitmap, imgToProcess);
             Mat outMat = new Mat();
             int filter_id = ImageEditUtil.getFilterId (filterName);

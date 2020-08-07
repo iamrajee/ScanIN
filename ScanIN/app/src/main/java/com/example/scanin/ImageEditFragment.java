@@ -7,8 +7,11 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -17,6 +20,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
@@ -46,12 +50,18 @@ import com.example.scanin.ImageDataModule.FilterTransformation;
 import com.example.scanin.ImageDataModule.ImageData;
 import com.example.scanin.ImageDataModule.ImageEditUtil;
 import com.example.scanin.StateMachineModule.MachineActions;
+import com.example.scanin.Utils.FileUtils;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import org.jetbrains.annotations.NotNull;
 import org.opencv.core.Point;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +72,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
 import jp.wasabeef.picasso.transformations.gpu.BrightnessFilterTransformation;
+import kotlin.collections.ArraysKt;
+import kotlin.jvm.internal.Intrinsics;
 
 import static com.example.scanin.ImageDataModule.ImageData.rotateBitmap;
 import static com.example.scanin.ImageDataModule.ImageEditUtil.convertArrayList2Map;
@@ -77,6 +89,7 @@ import static com.example.scanin.ImageDataModule.ImageEditUtil.scalePoints;
  */
 public class ImageEditFragment extends Fragment {
 
+    private static final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -446,6 +459,70 @@ public class ImageEditFragment extends Fragment {
             }
         });
 
+        rootView.findViewById(R.id.save_in_gallery).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(mAdapter.getItemCount() >= 0){
+                    View currentView = pagerSnapHelper.findSnapView(layoutManager);
+                    if(currentView == null) return;
+                    adapterPosition = layoutManager.getPosition(currentView);
+                    ImageInfo imageInfo = documentAndImageInfo.getImages().get(adapterPosition);
+
+                    AlertDialog.Builder alert = new AlertDialog.Builder(getContext(), R.style.AlertDialogCustom);
+
+                    TextView textView = new TextView(getContext());
+                    textView.setText("Save in gallery");
+                    textView.setPadding(20, 30, 20, 30);
+                    textView.setTextSize(20F);
+                    textView.setTextColor(Color.BLACK);
+                    alert.setCustomTitle(textView);
+
+                    EditText editText = new EditText(getContext());
+                    String new_name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis());
+                    editText.setText(new_name);
+                    editText.setTextSize(20F);
+                    editText.setTextColor(Color.BLACK);
+                    alert.setView(editText);
+
+                    alert.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            //imageEditFragmentCallback.editDeleteImageCallback(adapterPosition);
+                            String new_name_edited = editText.getText().toString();
+                            Log.d ("imageSave", new_name_edited + " trying to save in gallery");
+                            if (FileUtils.validateFileName(new_name_edited)) {
+                                try {
+                                    saveInGalleryHelper (imageInfo, new_name_edited);
+
+                                    Toast.makeText(getContext(),
+                                            "File saved successfully in Pictures folder.", Toast.LENGTH_SHORT)
+                                            .show();
+                                } catch (Exception e) {
+                                    Log.e("imageSave", "Exception " + e.getMessage());
+                                    Toast.makeText(getContext(),
+                                            "File save failed.", Toast.LENGTH_SHORT)
+                                            .show();
+                                    e.printStackTrace();
+                                }
+
+                            } else {
+                                Toast.makeText(getContext(),
+                                        "Allowed characters A-Z, a-z, 0-9, _, -", Toast.LENGTH_LONG)
+                                        .show();
+                            }
+                        }
+                    });
+
+                    alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            // what ever you want to do with No option.
+                        }
+                    });
+
+                    alert.show();
+                }
+            }
+        });
+
         rootView.findViewById(R.id.discard).setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
@@ -766,6 +843,19 @@ public class ImageEditFragment extends Fragment {
 
     public void setImagePathList(DocumentAndImageInfo documentAndImageInfo) {
         this.documentAndImageInfo = documentAndImageInfo;
+        /*
+        On rotating the device (auto rotate)
+
+        16781-16781/com.example.scanin E/AndroidRuntime: FATAL EXCEPTION: main
+        Process: com.example.scanin, PID: 16781
+        java.lang.NullPointerException: Attempt to invoke virtual method
+        'void com.example.scanin.RecyclerViewEditAdapter.setmDataset
+        (com.example.scanin.DatabaseModule.DocumentAndImageInfo)' on a null object reference
+
+        Possible solutions -
+            enforce portrait mode.
+            Check onPause, onRestart in ScanActivity
+         */
         mAdapter.setmDataset(documentAndImageInfo);
     }
 
@@ -783,4 +873,49 @@ public class ImageEditFragment extends Fragment {
         super.onDestroyView();
         disposable.clear();
     }
+
+    public void saveInGalleryHelper (ImageInfo imageInfo, String new_name_edited) throws Exception {
+        currentImg = new ImageData(imageInfo);
+        currentImg.setOriginalBitmap(getContext());
+
+        int width = currentImg.getOriginalWidth();
+        int height = currentImg.getOriginalHeight();
+
+        currentImg.setOriginalBitmap(rotateBitmap(currentImg.getOriginalBitmap(),
+                90.0f * imageInfo.getRotationConfig()));
+
+        // comes indirectly from database.
+        ArrayList <Point> points = currentImg.getCropPosition();
+
+        // if nothing in database
+        if (points == null) {
+            points = convertMap2ArrayList(getDefaultPoints(width, height));
+            //currentImg.setCropPosition(points);
+            // if database has cropPoints in orig config. Convert to the current rotation config.
+        } else {
+            double scale = currentImg.getScale(width, height);
+            points = scalePoints(points, (float) scale);
+            int rotValue = 0;
+            int rotationConfig = currentImg.getRotationConfig();
+            while (rotValue != rotationConfig) {
+                points = rotateCropPoints(points, width, height, rotValue);
+                rotValue = (rotValue + 1) % 4;
+            }
+            //currentImg.setCropPosition(points);
+        }
+
+        currentImg.setOriginalBitmap(ImageData.applyCropImage(currentImg.getOriginalBitmap(),
+                points));
+        Log.d ("imageSave", "Filter = " + currentImg.getFilterName());
+        currentImg.setOriginalBitmap(ImageData.applyFilter(currentImg.getOriginalBitmap(), currentImg.getFilterName()));
+        currentImg.setOriginalBitmap(ImageData.changeContrastAndBrightness(getContext(),
+                currentImg.getOriginalBitmap(), (float) imageInfo.getAlpha(),
+                (float) imageInfo.getBeta()));
+
+//        File photoFile = new File (getContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES).getAbsolutePath(), new_name_edited);
+//        photoFile.createNewFile();
+//        FileUtils.saveFile(photoFile, currentImg.getOriginalBitmap());
+        FileUtils.saveImage(getContext(), currentImg.getOriginalBitmap(), new_name_edited);
+    }
+
 }
