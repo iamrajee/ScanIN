@@ -36,7 +36,7 @@
         android:background="#00000000"
         android:textColor="@color/file_name_color"
         android:textStyle="bold"
-        android:text="Unnam"
+        android:text="Unnamed"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:id="@+id/doc_name" />
