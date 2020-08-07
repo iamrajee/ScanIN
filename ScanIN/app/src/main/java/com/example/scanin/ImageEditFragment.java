@@ -34,8 +34,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.PagerSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.scanin.DatabaseModule.Document;
 import com.example.scanin.DatabaseModule.DocumentAndImageInfo;
 import com.example.scanin.DatabaseModule.ImageInfo;
+import com.example.scanin.DatabaseModule.Repository;
 import com.example.scanin.HomeModule.MainActivity;
 import com.example.scanin.ImageDataModule.BrightnessFilterTransformation1;
 import com.example.scanin.ImageDataModule.ContrastFilterTransformation1;
@@ -55,8 +57,10 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 import jp.wasabeef.picasso.transformations.gpu.BrightnessFilterTransformation;
 
 import static com.example.scanin.ImageDataModule.ImageData.rotateBitmap;
@@ -182,9 +186,9 @@ public class ImageEditFragment extends Fragment {
 
             try {
                 currentImg.setOriginalBitmap(cropImageView.getContext());
-                currentImg.setOriginalBitmap(rotateBitmap(currentImg.getOriginalBitmap(),
+                currentImg.setCurrentBitmap(rotateBitmap(currentImg.getCurrentBitmap(),
                         90.0f * imgInfo.getRotationConfig()));
-                selectedImage = currentImg.getSmallOriginalImage(cropImageView.getContext());
+                selectedImage = currentImg.getSmallCurrentImage(cropImageView.getContext());
                 hideProgressBar();
                 cropImageView.setImageBitmap(selectedImage);
             } catch (Exception e) {
@@ -280,7 +284,7 @@ public class ImageEditFragment extends Fragment {
             ArrayList <Point> points_ar = convertMap2ArrayList(points);
             currentImg.setCropPosition(points_ar);
             currentImg.rotateBitmap();
-            selectedImage = currentImg.getSmallOriginalImage(cropImageView.getContext());
+            selectedImage = currentImg.getSmallCurrentImage(cropImageView.getContext());
             cropImageView.setImageBitmap(selectedImage);
 
             ViewTreeObserver vto = cropImageView.getViewTreeObserver();

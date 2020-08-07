@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.scanin.DatabaseModule.DocumentAndImageInfo;
 import com.example.scanin.DatabaseModule.ImageInfo;
+import com.example.scanin.DatabaseModule.Repository;
 import com.example.scanin.ImageDataModule.BrightnessFilterTransformation1;
 import com.example.scanin.ImageDataModule.ContrastAndBrightnessTransformation;
 import com.example.scanin.ImageDataModule.ContrastFilterTransformation1;
@@ -30,7 +31,7 @@ import jp.wasabeef.picasso.transformations.gpu.BrightnessFilterTransformation;
 public class RecyclerViewEditAdapter extends RecyclerView.Adapter<RecyclerViewEditAdapter.EditViewHolder> {
     private DocumentAndImageInfo documentAndImageInfo;
     private ProgressBar progressBar;
-
+    private Repository repository;
     private ScanActivity context;
     public static final int MAX_WIDTH = 2000;
     public static final int MAX_HEIGHT = 2000;
@@ -49,6 +50,8 @@ public class RecyclerViewEditAdapter extends RecyclerView.Adapter<RecyclerViewEd
     }
 
     public RecyclerViewEditAdapter.EditViewHolder onCreateViewHolder(ViewGroup parent, int viewtype){
+        //repository = new Repository(context.getApplication());
+        repository = context.getRepository();
         int layoutIdForImageAdapter =R.layout.image_edit_item;
         LayoutInflater inflater =LayoutInflater.from(parent.getContext());
         View view =inflater.inflate(layoutIdForImageAdapter, parent, false);
@@ -95,6 +98,7 @@ public class RecyclerViewEditAdapter extends RecyclerView.Adapter<RecyclerViewEd
     @Override
     public void onBindViewHolder(RecyclerViewEditAdapter.EditViewHolder holder, int position) {
         ImageInfo imageInfo = documentAndImageInfo.getImages().get(position);
+        repository.updateImage(imageInfo);
         Uri uri = imageInfo.getUri();
 
         int size = (int) Math.ceil(Math.sqrt(MAX_WIDTH * MAX_HEIGHT));

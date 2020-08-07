@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.ColorSpace;
 import android.graphics.Matrix;
 
 import android.graphics.Paint;
@@ -13,6 +14,7 @@ import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -31,8 +33,10 @@ import java.util.ArrayList;
 import static java.lang.Math.min;
 
 public class ImageData {
+    // original is what is loaded directly.
+    // This can be a potential issue for memory errors if original is too big.
     private Bitmap originalBitmap;
-    private Bitmap croppedBitmap;
+    // current is after reszizing to MAX_SIZE maintaining aspect ratio.
     private Bitmap currentBitmap;
     private String filterName;
     private Uri fileName;
@@ -40,12 +44,16 @@ public class ImageData {
     private int THUMBNAIL_SIZE = 64;
     private final double EPS = 1e-10;
     private int rotationConfig = 0;
+
+    // These values correspond to current Bitmap just after it was loaded and rotated in
+    // in its correct configuration.
     private int origWidth;
     private int origHeight;
     public static int MAX_SIZE=1500;
 
     public ImageData(Uri uri) {
         this.originalBitmap = null;
+        this.currentBitmap = null;
         this.filterName = null;
         this.fileName = uri;
         this.cropPosition = null;
@@ -54,6 +62,7 @@ public class ImageData {
 
     public ImageData(ImageInfo imgInfo) {
         this.originalBitmap = null;
+        this.currentBitmap = null;
         this.filterName = ImageEditUtil.getFilterName(imgInfo.getFilterId());
         this.fileName = imgInfo.getUri();
         this.cropPosition = ImageEditUtil.convertMap2ArrayList(imgInfo.getCropPositionMap());
@@ -62,6 +71,10 @@ public class ImageData {
 
     public Bitmap getOriginalBitmap() {
         return originalBitmap;
+    }
+
+    public Bitmap getCurrentBitmap() {
+        return currentBitmap;
     }
 
     public Uri getFileName() {
@@ -79,6 +92,10 @@ public class ImageData {
     public void setOriginalBitmap(Bitmap originalBitmap) {
         this.originalBitmap = originalBitmap;
         // Intentionally not updating origWidth and origHeight.
+    }
+
+    public void setCurrentBitmap (Bitmap currentBitmap) {
+        this.currentBitmap = currentBitmap;
     }
 
     public void setFilterName(String filterName) {
@@ -119,18 +136,31 @@ public class ImageData {
     public void setOriginalBitmap(Context context) throws IOException {
         try {
             this.originalBitmap =  MediaStore.Images.Media.getBitmap(context.getContentResolver() , fileName);
-            // As of now using the below commented code is giving me error related to size of bitmap.
+
+//            Bitmap temp = ImageEditUtil.loadBitmap(context, this.fileName);
+//            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                ColorSpace cs1 = this.originalBitmap.getColorSpace();
+//                int d1 = this.originalBitmap.getDensity();
+//                Log.d ("imageData", cs1.toString() + " , density=" + d1 + ", byte=" +
+//                        this.originalBitmap.getAllocationByteCount()
+//                );
+//                ColorSpace cs2 = temp.getColorSpace();
+//                int d2 = temp.getDensity();
+//                Log.d ("imageData", cs2.toString() + " , density=" + d2 + ", byte=" +
+//                        temp.getAllocationByteCount());
+//                temp.getConfig().toString();
+//            }
+
+            // As of now using the below commented code is giving me error related to bitmap2mat function.
             // OpenCV(4.2.0) Error: Assertion failed (AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0) in Java_org_opencv_android_Utils_nBitmapToMat2, file /build/master_pack-android/opencv/modules/java/generator/src/cpp/utils.cpp, line 38
             //2020-08-05 21:54:12.957 23053-23053/com.example.scanin E/org.opencv.android.Utils: nBitmapToMat caught cv::Exception: OpenCV(4.2.0) /build/master_pack-android/opencv/modules/java/generator/src/cpp/utils.cpp:38: error: (-215:Assertion failed) AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0 in function 'Java_org_opencv_android_Utils_nBitmapToMat2'
             //2020-08-05 21:54:12.968 23053-23053/com.example.scanin A/libc: Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x18
             //this.originalBitmap = ImageEditUtil.loadBitmap(context, this.fileName);
 
             this.originalBitmap = ImageData.rotateBitmap(this.originalBitmap);
-            this.originalBitmap = getResizedBitmap(this.originalBitmap, MAX_SIZE);
-            this.croppedBitmap = originalBitmap;
-            this.currentBitmap = originalBitmap;
-            this.origHeight = this.originalBitmap.getHeight();
-            this.origWidth = this.originalBitmap.getWidth();
+            this.currentBitmap = getResizedBitmap(this.originalBitmap, MAX_SIZE);
+            this.origHeight = this.currentBitmap.getHeight();
+            this.origWidth = this.currentBitmap.getWidth();
         } catch (Exception e){
             throw e;
         }
@@ -150,7 +180,7 @@ public class ImageData {
     }
 
     public void rotateBitmap () {
-        originalBitmap = rotateBitmap(originalBitmap);
+        currentBitmap = rotateBitmap(currentBitmap);
         rotateCropPosition ();
         rotationConfig = (rotationConfig + 1) % 4;
     }
@@ -166,8 +196,8 @@ public class ImageData {
     public void rotateCropPosition () {
         if (cropPosition != null) {
             ArrayList <Point> res = new ArrayList<>();
-            int width = originalBitmap.getWidth();
-            int height = originalBitmap.getHeight();
+            int width = currentBitmap.getWidth();
+            int height = currentBitmap.getHeight();
 
             for (int i = 0; i < 4; i++) {
                 int j = (i + 4) % 4;
@@ -183,8 +213,8 @@ public class ImageData {
     }
 
     public double getScale (int cwidth, int cheight) {
-        int width = originalBitmap.getWidth();
-        int height = originalBitmap.getHeight();
+        int width = currentBitmap.getWidth();
+        int height = currentBitmap.getHeight();
         double fx = (double) cwidth / width;
         double fy = (double) cheight / height;
         double scale = min (fx, fy);
@@ -192,45 +222,20 @@ public class ImageData {
     }
 
     //Change Brightness and contrast
-    public static Bitmap changeContrastAndBrightness(Bitmap bitmap, float contrast, int beta) {
-//        Bitmap bitmap;
-//        Mat imgToProcess = new Mat();
-//        Utils.bitmapToMat(source, imgToProcess);
-//        Mat outMat = new Mat();
-//        ImageEditUtil.changeContrastAndBrightness(imgToProcess.getNativeObjAddr(), outMat.getNativeObjAddr(), alpha, beta);
-////        ImageEditUtil.filterImage(imgToProcess.getNativeObjAddr(), outMat.getNativeObjAddr(), 1);
-//        Bitmap currentBitmap = Bitmap.createBitmap(outMat.cols(),
-//                              outMat.rows(), Bitmap.Config.ARGB_8888);
-//        Utils.matToBitmap(outMat, currentBitmap);
-        float[] colorTransform = new float[]{
-                contrast, 0, 0, 0, 0,
-                0, contrast, 0, 0, 0,
-                0, 0, contrast, 0, 0,
-                0, 0, 0, 1, 0};
-
-        ColorMatrix colorMatrix = new ColorMatrix();
-        colorMatrix.setSaturation(0f);
-        colorMatrix.set(colorTransform);
-
-        ColorMatrixColorFilter colorFilter = new ColorMatrixColorFilter(colorMatrix);
-        Paint paint = new Paint();
-        paint.setColorFilter(colorFilter);
-
-        Bitmap resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-        Canvas canvas = new Canvas(resultBitmap);
-        canvas.drawBitmap(resultBitmap, 0, 0, paint);
-
-        return resultBitmap;
-//        return currentBitmap;
+    public static Bitmap changeContrastAndBrightness(Context context, Bitmap bitmap, float alpha, float beta) {
+        ContrastFilterTransformation1 t1 = new ContrastFilterTransformation1(context, alpha);
+        BrightnessFilterTransformation1 t2 = new BrightnessFilterTransformation1(context, beta);
+        bitmap = t1.transform(bitmap);
+        bitmap = t2.transform(bitmap);
+        return bitmap;
     }
 
-    // cropped is applied on originalBitmap and saved in croppedBitmap
-    public void applyCropImage () {
-        if (originalBitmap != null && cropPosition != null) {
+    public static Bitmap applyCropImage (Bitmap bitmap, ArrayList<Point> cropPosition) {
+        if (bitmap != null && cropPosition != null) {
             //Mat imgToProcess = new Mat();
-            Mat imgToProcess = new Mat(originalBitmap.getWidth(), originalBitmap.getHeight(), CvType.CV_8UC(4));
+            Mat imgToProcess = new Mat(bitmap.getWidth(), bitmap.getHeight(), CvType.CV_8UC(4));
 
-            Utils.bitmapToMat(originalBitmap, imgToProcess);
+            Utils.bitmapToMat(bitmap, imgToProcess);
             Mat outMat = new Mat();
             Mat pts = new Mat(4, 2, CvType.CV_16U);
             for (int i = 0; i < 4; i++) {
@@ -239,42 +244,32 @@ public class ImageData {
             }
             ImageEditUtil.cropImage(imgToProcess.getNativeObjAddr(),
                     outMat.getNativeObjAddr(), pts.getNativeObjAddr());
-
-            croppedBitmap = Bitmap.createBitmap(outMat.cols(),
+            bitmap = Bitmap.createBitmap(outMat.cols(),
                                     outMat.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(outMat, croppedBitmap);
+            Utils.matToBitmap(outMat, bitmap);
         }
+        return bitmap;
     }
 
-    // filter is applied on croppedBitmap and saved in currentBitmap.
-    public void applyFilter () {
+    public static Bitmap applyFilter (Bitmap bitmap, String filterName) {
         if (ImageEditUtil.isValidFilter(filterName)) {
             Mat imgToProcess = new Mat();
-            Utils.bitmapToMat(croppedBitmap, imgToProcess);
+            Utils.bitmapToMat(bitmap, imgToProcess);
             Mat outMat = new Mat();
             int filter_id = ImageEditUtil.getFilterId (filterName);
             ImageEditUtil.filterImage(imgToProcess.getNativeObjAddr(), outMat.getNativeObjAddr(), filter_id);
-            currentBitmap = Bitmap.createBitmap(outMat.cols(),
+            bitmap = Bitmap.createBitmap(outMat.cols(),
                     outMat.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(outMat, currentBitmap);
+            Utils.matToBitmap(outMat, bitmap);
         }
-    }
-
-    public void applyFilter (String filterName) {
-        this.filterName = filterName;
-        applyFilter();
-    }
-
-    public void applyCropImage (ArrayList <Point> cropPosition) {
-        setCropPosition(cropPosition);
-        applyCropImage();
+        return bitmap;
     }
 
     public ArrayList <Point> getBestPoints () {
         ArrayList <Point> res = new ArrayList<Point>();
-        if (originalBitmap != null) {
-            Mat imgToProcess = new Mat(originalBitmap.getWidth(), originalBitmap.getHeight(), CvType.CV_8UC(4));
-            Utils.bitmapToMat(originalBitmap, imgToProcess);
+        if (currentBitmap != null) {
+            Mat imgToProcess = new Mat(currentBitmap.getWidth(), currentBitmap.getHeight(), CvType.CV_8UC(4));
+            Utils.bitmapToMat(currentBitmap, imgToProcess);
             Mat pts = new Mat(4, 2, CvType.CV_16U);
             pts.setTo(new Scalar(-1));
             ImageEditUtil.getBestPoints(imgToProcess.getNativeObjAddr(), pts.getNativeObjAddr());
@@ -285,7 +280,7 @@ public class ImageData {
         return res;
     }
 
-    public Bitmap getSmallOriginalImage(Context context) {
-        return this.originalBitmap;
+    public Bitmap getSmallCurrentImage(Context context) {
+        return this.currentBitmap;
     }
 }

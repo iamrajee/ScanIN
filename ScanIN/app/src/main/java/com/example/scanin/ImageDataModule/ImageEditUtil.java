@@ -179,6 +179,7 @@ public class ImageEditUtil {
         }
     }
 
+    // for next release https://developer.android.com/topic/performance/graphics/load-bitmap
     public static Bitmap loadBitmap (Context context, Uri fileName) {
         Bitmap temp = null;
         try {
