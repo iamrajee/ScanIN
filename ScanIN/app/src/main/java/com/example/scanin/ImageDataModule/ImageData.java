@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import static java.lang.Math.min;
+import org.opencv.imgproc.Imgproc;
 
 public class ImageData {
     // original is what is loaded directly.
@@ -44,7 +45,6 @@ public class ImageData {
     private int THUMBNAIL_SIZE = 64;
     private final double EPS = 1e-10;
     private int rotationConfig = 0;
-
     // These values correspond to current Bitmap just after it was loaded and rotated in
     // in its correct configuration.
     private int loadWidth;
@@ -215,6 +215,9 @@ public class ImageData {
         }
     }
 
+
+
+
     public Bitmap getThumbnail() {
         Bitmap thumbImage = ThumbnailUtils.extractThumbnail(currentBitmap, THUMBNAIL_SIZE, THUMBNAIL_SIZE);
         return thumbImage;
@@ -251,7 +254,7 @@ public class ImageData {
                 pts.put(i, 1, cropPosition.get(i).y);
             }
             ImageEditUtil.cropImage(imgToProcess.getNativeObjAddr(),
-                    outMat.getNativeObjAddr(), pts.getNativeObjAddr());
+                    outMat.getNativeObjAddr(), pts.getNativeObjAddr(), Imgproc.INTER_LANCZOS4);
             bitmap = Bitmap.createBitmap(outMat.cols(),
                                     outMat.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(outMat, bitmap);

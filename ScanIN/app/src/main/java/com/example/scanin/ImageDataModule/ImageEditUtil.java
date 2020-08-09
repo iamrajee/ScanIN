@@ -221,7 +221,7 @@ public class ImageEditUtil {
 
     public static native void getBestPoints (long imgAddr, long pts);
 
-    public static native void cropImage(long imgAddr, long cropImgAddr, long pts);
+    public static native void cropImage(long imgAddr, long cropImgAddr, long pts, int interpolation);
 
     public static native void filterImage(long imgAddr, long filterImgAddr, int filterId);
 

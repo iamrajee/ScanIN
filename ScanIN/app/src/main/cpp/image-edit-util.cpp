@@ -18,7 +18,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_example_scanin_ImageDataModule_ImageEditUtil_cropImage(JNIEnv *env, jclass clazz,
                                                                 jlong img_addr, jlong crop_img_addr,
-                                                                jlong pts) {
+                                                                jlong pts, jint interpolation) {
     Mat& src = *(Mat*) img_addr;
     Mat& dst = *(Mat*) crop_img_addr;
     Mat& points = *(Mat*) pts;
@@ -40,7 +40,7 @@ Java_com_example_scanin_ImageDataModule_ImageEditUtil_cropImage(JNIEnv *env, jcl
     // changing cv::INTER_NEAREST to cv::INTER_LANCZOS4 should improve results
     // but degrade performance.
     // This can raise errors due to order problem.
-    int ret = four_point_transform(src, dst, vec_pts, cv::INTER_NEAREST);
+    int ret = four_point_transform(src, dst, vec_pts, interpolation);
     if (ret) {
         __android_log_print(ANDROID_LOG_ERROR, "NativeCode", "Order points function failed before warp");
     }

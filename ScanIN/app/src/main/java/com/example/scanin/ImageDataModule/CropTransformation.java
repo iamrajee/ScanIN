@@ -9,6 +9,7 @@ import com.squareup.picasso.Transformation;
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.Map;
 
@@ -34,8 +35,6 @@ public class CropTransformation implements Transformation {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
 
-        Log.d("Transformation", "Reached crop transformation.");
-
         if (cropRequired(this.cropPoints, width, height)) {
             Log.d("Transformation", "crop transformation code used.");
             float scale = getScale(width, height);
@@ -51,11 +50,10 @@ public class CropTransformation implements Transformation {
                 pts.put(i, 1, cropPoints.get(i).y);
             }
             ImageEditUtil.cropImage(imgToProcess.getNativeObjAddr(),
-                    outMat.getNativeObjAddr(), pts.getNativeObjAddr());
+                    outMat.getNativeObjAddr(), pts.getNativeObjAddr(), Imgproc.INTER_LANCZOS4);
             Bitmap currentBitmap = Bitmap.createBitmap(outMat.cols(),
                     outMat.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(outMat, currentBitmap);
-            Log.d ("Transform", "Didn't crash till now");
             return currentBitmap;
         } else {
             return bitmap;
