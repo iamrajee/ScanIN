@@ -126,6 +126,7 @@ public class ImageEditFragment extends Fragment {
     public final int BRIGHTNESS = 0;
     public final int CONTRAST = 1;
     private float effectVal;
+    private int newAdapterPosition = 0;
 
     private void initializeCropping() {
         ViewTreeObserver vto = cropImageView.getViewTreeObserver();
@@ -406,6 +407,7 @@ public class ImageEditFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d ("imageEditFragment", "On Create View");
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_image_edit, container, false);
         ((ScanActivity)getActivity()).CurrentMachineState = this.CurrentMachineState;
@@ -427,6 +429,16 @@ public class ImageEditFragment extends Fragment {
         recyclerView.setAdapter(mAdapter);
         recyclerView.setHasFixedSize(true);
         recyclerView.setItemViewCacheSize(20);
+
+        recyclerView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                // Remove after the first run so it doesn't fire forever
+                recyclerView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                //recyclerView.scrollToPosition(newAdapterPosition);
+                recyclerView.smoothScrollToPosition(newAdapterPosition);
+            }
+        });
 
 //        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 //            @Override
@@ -847,6 +859,9 @@ public class ImageEditFragment extends Fragment {
         btnCropRotate.setOnClickListener(cropRotate);
 
         imageEditFragmentCallback.onCreateEditCallback();
+
+        //recyclerView.smoothScrollToPosition(newAdapterPosition);
+
         return rootView;
     }
 
@@ -869,7 +884,7 @@ public class ImageEditFragment extends Fragment {
     }
 
     public void setCurrentAdapterPosition(Integer position){
-        adapterPosition = position;
+        newAdapterPosition = position;
     }
 
     public void setCurrentMachineState(int currentMachineState) {
