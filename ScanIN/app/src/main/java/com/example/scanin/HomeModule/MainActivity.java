@@ -105,6 +105,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    public void openPdfView(View view, DocumentPreview clickedItem) {
+        findViewById(R.id.recyclerview_doc).setClickable(false);
+        Intent intent = new Intent(this, ScanActivity.class);
+        intent.putExtra("CURRENT_DOCUMENT_ID", clickedItem.getDocument().getDocumentId());
+        intent.putExtra("STATE", MachineStates.HOME);
+        intent.putExtra("ACTION", MachineActions.HOME_OPEN_PDF);
+        startActivity(intent);
+    }
+
+    @Override
     public void deleteDoc(View view, DocumentPreview documentPreview) {
         AlertDialog.Builder alert = new AlertDialog.Builder(this, R.style.AlertDialogCustom);
 

@@ -2,6 +2,7 @@ package com.example.scanin.HomeModule;
 
 
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +41,7 @@ public class RecyclerViewDocAdapter extends RecyclerView.Adapter<RecyclerViewDoc
             textView = view.findViewById(R.id.doc_name);
             view.findViewById(R.id.delete_doc).setOnClickListener(this);
             view.findViewById(R.id.rename_doc).setOnClickListener(this);
+            view.findViewById(R.id.share_doc).setOnClickListener(this);
             view.setOnClickListener(this);
 
             view.setOnLongClickListener(new View.OnLongClickListener() {
@@ -55,8 +57,10 @@ public class RecyclerViewDocAdapter extends RecyclerView.Adapter<RecyclerViewDoc
         public void onClick(View view) {
             if(view.getId() == R.id.delete_doc){
                 mListener.deleteDoc(view, mDataset.get(getAdapterPosition()));
-            }else if(view.getId() == R.id.rename_doc){
+            }else if(view.getId() == R.id.rename_doc) {
                 mListener.renameDoc(view, mDataset.get(getAdapterPosition()));
+            }else if(view.getId() == R.id.share_doc) {
+                mListener.openPdfView(view, mDataset.get(getAdapterPosition()));
             }else{
                 mListener.onClick(view, mDataset.get(getAdapterPosition()));
             }

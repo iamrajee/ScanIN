@@ -2,6 +2,7 @@ package com.example.scanin.HomeModule;
 
 import android.view.View;
 
+import com.example.scanin.DatabaseModule.Document;
 import com.example.scanin.DatabaseModule.DocumentPreview;
 
 public interface DocAdapterClickListener{
@@ -12,4 +13,6 @@ public interface DocAdapterClickListener{
     public void deleteDoc(View view, DocumentPreview documentPreview);
 
     public void renameDoc(View view, DocumentPreview documentPreview);
+
+    public void openPdfView(View view, DocumentPreview documentPreview);
 }
