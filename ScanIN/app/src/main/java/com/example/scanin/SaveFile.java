@@ -140,11 +140,9 @@ public class SaveFile {
     }
 
     public static Bitmap prepareBitmap (Context context, Bitmap bmp, ImageInfo imgInfo) {
-
-        bmp = rotateBitmap(bmp, imgInfo.getRotationConfig() * 90.0f);
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-
+        bmp = rotateBitmap(bmp, imgInfo.getRotationConfig() * 90.0f);
         // comes indirectly from database.
         ArrayList <Point> points = ImageEditUtil.convertMap2ArrayList(imgInfo.getCropPositionMap());
 
@@ -172,9 +170,12 @@ public class SaveFile {
         return bmp;
     }
 
-    public static void createPdfFromDocumentAndImageInfo(Activity myActivity, DocumentAndImageInfo doc)throws IOException {
+    public static void createPdfFromDocumentAndImageInfo(Activity myActivity, DocumentAndImageInfo doc, float quality)throws IOException {
         PdfDocument document = new PdfDocument();
         int pageNumber = 1;
+
+        final int A4_width_final = (int) (A4_width * quality);
+        final int A4_height_final = (int) (A4_height * quality);
 
         List<ImageInfo> images = doc.getImages();
         String pdf_name = doc.getDocument().getDocumentName();
@@ -191,10 +192,10 @@ public class SaveFile {
             Bitmap bmp = Picasso.get().load(img.getUri()).get();
             bmp = prepareBitmap (myActivity, bmp, img);
 
-            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(A4_width,
-                    A4_height, pageNumber).create();
+            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(A4_width_final,
+                    A4_height_final, pageNumber).create();
 
-            Double scale = min((double) A4_width / bmp.getWidth(), (double) A4_height / bmp.getHeight());
+            Double scale = min((double) A4_width_final / bmp.getWidth(), (double) A4_height_final / bmp.getHeight());
             bmp = Bitmap.createScaledBitmap(bmp, (int) (bmp.getWidth() * scale), (int) (bmp.getHeight() * scale), false);
 
             PdfDocument.Page page = document.startPage(pageInfo);
