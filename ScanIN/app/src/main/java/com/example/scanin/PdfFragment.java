@@ -3,9 +3,11 @@ package com.example.scanin;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -17,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.github.barteksc.pdfviewer.PDFView;
 
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -38,8 +41,15 @@ import com.example.scanin.StateMachineModule.MachineStates;
 import com.example.scanin.StateMachineModule.StateChangeHelper;
 import com.example.scanin.Utils.FileUtils;
 import androidx.appcompat.widget.Toolbar;
+import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
+import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
+import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
+import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
+//import com.github.barteksc.pdfviewer.util.FitPolicy;
+import com.shockwave.pdfium.PdfDocument;
 
 import java.io.File;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -63,6 +73,10 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
     private Repository mRepository;
     TextView textView, textView2, textView3;
     private final CompositeDisposable disposable = new CompositeDisposable();
+    public String quality_type = "normal";
+    private PDFView pdfView;
+    Integer pageNumber = 0;
+    String pdfFileName;
 
     public PdfFragment() {
         // Required empty public constructor
@@ -186,30 +200,92 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
         alert.show();
     }
 
+    public void printBookmarksTree(List<PdfDocument.Bookmark> tree, String sep) {
+        for (PdfDocument.Bookmark b : tree) {
+
+            Log.e(TAG, String.format("%s %s, p %d", sep, b.getTitle(), b.getPageIdx()));
+
+            if (b.hasChildren()) {
+                printBookmarksTree(b.getChildren(), sep + "-");
+            }
+        }
+    }
+
+    public String getFileName(Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = getContext().getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            }
+        }
+        if (result == null) {
+            result = uri.getLastPathSegment();
+        }
+        return result;
+    }
+
+    private void displayFromUri(Uri uri) {
+        pdfFileName = getFileName(uri);
+        pdfView.fromUri(uri)
+                .defaultPage(pageNumber)
+                .onPageChange(new OnPageChangeListener() {
+                    @Override
+                    public void onPageChanged(int page, int pageCount) {
+                        pageNumber = page;
+//                        setTitle(String.format("%s %s / %s", pdfFileName, page + 1, pageCount));
+                    }
+                })
+                .enableAnnotationRendering(true)
+                .onLoad(new OnLoadCompleteListener() {
+                    @Override
+                    public void loadComplete(int nbPages) {
+                        PdfDocument.Meta meta = pdfView.getDocumentMeta();
+                        Log.e(TAG, "title = " + meta.getTitle());
+                        Log.e(TAG, "author = " + meta.getAuthor());
+                        Log.e(TAG, "subject = " + meta.getSubject());
+                        Log.e(TAG, "keywords = " + meta.getKeywords());
+                        Log.e(TAG, "creator = " + meta.getCreator());
+                        Log.e(TAG, "producer = " + meta.getProducer());
+                        Log.e(TAG, "creationDate = " + meta.getCreationDate());
+                        Log.e(TAG, "modDate = " + meta.getModDate());
+
+                        printBookmarksTree(pdfView.getTableOfContents(), "-");
+                    }
+                })
+                .scrollHandle(new DefaultScrollHandle(getContext()))
+                .spacing(10) // in dp
+                .onPageError(new OnPageErrorListener() {
+                    @Override
+                    public void onPageError(int page, Throwable t) {
+                        Log.e(TAG, "Cannot load page " + page);
+                    }
+                })
+                .load();
+    }
+
     private void create_pdf_helper() {
         disposable.add(Single.create(s->{
-            SaveFile.createPdfFromDocumentAndImageInfo(getActivity(), documentAndImageInfo);
+            SaveFile.createPdfFromDocumentAndImageInfo(getActivity(), documentAndImageInfo, 1.0f);
             s.onSuccess(true);
         }).subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(s->{
 
                     Toast.makeText(getContext(), "Successfully saved pdf", Toast.LENGTH_LONG).show();
+                    pdfView.isBestQuality();
 
-//                    File savedPDFDirectory = Objects.requireNonNull(getActivity()).getExternalFilesDir("saved_pdf");
-//                    String pdf_full_path = savedPDFDirectory + "/" + documentAndImageInfo.getDocument().getDocumentName() + ".pdf";
-//                    File fullPathFile = new File (pdf_full_path);
-//
-//                    Intent intent = new Intent(getContext(), PdfViewerActivity.class);
-//                    intent.putExtra(PdfViewerActivity.FILE_URL, fullPathFile.toURI());
-//                    intent.putExtra(PdfViewerActivity.FILE_TITLE, documentAndImageInfo.getDocument().getDocumentName());
-//                    intent.putExtra(PdfViewerActivity.FILE_DIRECTORY, "*");
-//                    intent.putExtra(PdfViewerActivity.ENABLE_FILE_DOWNLOAD, false);
-//                    intent.putExtra(PdfViewerActivity.IS_GOOGLE_ENGINE, false);
-//
-//                    Log.d ("fragmentPDF", "start pdf activity");
-//                    startActivity(intent);
-
+                    File savedPDFDirectory = getActivity().getExternalFilesDir("saved_pdf");
+                    String fullName = savedPDFDirectory + "/" +
+                            documentAndImageInfo.getDocument().getDocumentName() + ".pdf";
+                    File fullFile = new File(fullName);
+                    displayFromUri(Uri.fromFile(fullFile));
 
                 }, Throwable::printStackTrace));
 
@@ -227,6 +303,8 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_pdf, container, false);
         ((ScanActivity)getActivity()).CurrentMachineState = this.CurrentMachineState;
+
+        pdfView = rootView.findViewById(R.id.pdfView);
 
         pdfFragmentCallback.onCreatePdfCallback();
         //TextView fileName = rootView.findViewById(R.id.file_name_edit);
