@@ -14,52 +14,66 @@
         android:layout_height="match_parent"
         android:paddingTop="5dp">
 
-        <androidx.appcompat.widget.Toolbar
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/my_awesome_toolbar"
-            app:layout_constraintTop_toTopOf="parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
             >
-            <ImageButton
-                android:layout_width="45dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:padding="4dp"
-                android:layout_marginRight="10dp"
-                android:background="@drawable/img_position_background"
-                android:src="@drawable/ic_baseline_home_24"
-                android:id="@+id/nav_home"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintRight_toLeftOf="parent"
-                />
 
-            <ImageButton
-                android:layout_width="45dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:padding="4dp"
-                android:layout_marginRight="10dp"
-                android:background="@drawable/img_position_background"
-                android:src="@drawable/ic_edit_24px"
-                android:id="@+id/nav_edit"
+            <androidx.appcompat.widget.Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/my_awesome_toolbar"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintRight_toLeftOf="@id/nav_home"
-                />
+                >
+                <ImageButton
+                    android:layout_width="45dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:padding="4dp"
+                    android:layout_marginRight="10dp"
+                    android:background="@drawable/img_position_background"
+                    android:src="@drawable/ic_baseline_home_24"
+                    android:id="@+id/nav_home"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintRight_toLeftOf="parent"
+                    />
 
-            <ImageButton
-                android:layout_width="45dp"
-                android:layout_height="30dp"
-                android:layout_gravity="center"
-                android:padding="4dp"
-                android:layout_marginRight="10dp"
-                android:background="@drawable/img_position_background"
-                android:src="@drawable/ic_share_24px"
-                android:id="@+id/nav_share"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintRight_toLeftOf="@id/nav_edit"
-                />
+                <ImageButton
+                    android:layout_width="45dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:padding="4dp"
+                    android:layout_marginRight="10dp"
+                    android:background="@drawable/img_position_background"
+                    android:src="@drawable/ic_edit_24px"
+                    android:id="@+id/nav_edit"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintRight_toLeftOf="@id/nav_home"
+                    />
 
-        </androidx.appcompat.widget.Toolbar>
+                <ImageButton
+                    android:layout_width="45dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:padding="4dp"
+                    android:layout_marginRight="10dp"
+                    android:background="@drawable/img_position_background"
+                    android:src="@drawable/ic_share_24px"
+                    android:id="@+id/nav_share"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintRight_toLeftOf="@id/nav_edit"
+                    />
+
+            </androidx.appcompat.widget.Toolbar>
+
+            <com.github.barteksc.pdfviewer.PDFView
+                android:id="@+id/pdfView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_constraintBottom_toBottomOf="@id/my_awesome_toolbar"/>
+
+        </LinearLayout>
 
 
 
