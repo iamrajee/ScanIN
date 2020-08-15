@@ -152,9 +152,7 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
                             Document document = documentAndImageInfo.getDocument();
                             ((ScanActivity) Objects.requireNonNull(getActivity())).renameDoc(document, new_name);
 
-                            //document.setDocumentName(new_name);
-                            //homeViewModel.updateDoc(document);
-
+                            imageGridFragmentCallback.onClickGridCallback(MachineActions.GRID_OPEN_PDF, null);
                         } else {
                             Toast.makeText(getContext(),
                                     "Allowed characters A-Z, a-z, 0-9, _, -", Toast.LENGTH_LONG)
