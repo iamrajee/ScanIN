@@ -2,7 +2,8 @@ package com.example.scanin.StateMachineModule;
 
 public class MachineStates {
     public static final Integer HOME = 10;
-    public static final Integer PDF = 11;
+    public static final Integer PDF1 = 11;
+    public static final Integer PDF2 = 19;
     public static final Integer CAMERA = 12;
     public static final Integer EDIT_1 = 13;
     public static final Integer EDIT_2 = 14;
