@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/drawer_layout"
+    android:fitsSystemWindows="true"
+    android:background="@color/white"
+    tools:context=".PdfFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="5dp">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/my_awesome_toolbar"
+            app:layout_constraintTop_toTopOf="parent"
+            >
+            <ImageButton
+                android:layout_width="45dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:padding="4dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/img_position_background"
+                android:src="@drawable/ic_baseline_home_24"
+                android:id="@+id/nav_home"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toLeftOf="parent"
+                />
+
+            <ImageButton
+                android:layout_width="45dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:padding="4dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/img_position_background"
+                android:src="@drawable/ic_edit_24px"
+                android:id="@+id/nav_edit"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/nav_home"
+                />
+
+            <ImageButton
+                android:layout_width="45dp"
+                android:layout_height="30dp"
+                android:layout_gravity="center"
+                android:padding="4dp"
+                android:layout_marginRight="10dp"
+                android:background="@drawable/img_position_background"
+                android:src="@drawable/ic_share_24px"
+                android:id="@+id/nav_share"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/nav_edit"
+                />
+
+        </androidx.appcompat.widget.Toolbar>
+
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</RelativeLayout>
