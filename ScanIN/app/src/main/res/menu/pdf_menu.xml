@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pdf_options">
+    <item
+        android:id="@+id/nav_quality"
+        android:title="Image Quality" />
+    <item
+        android:id="@+id/nav_rename"
+        android:title="Rename" />
+    <item
+        android:id="@+id/nav_grid"
+        android:title="Reorder" />
+<!--        <item-->
+<!--            android:id="@+id/nav_sign"-->
+<!--            android:title="Add Signature" />-->
+<!--    <item-->
+<!--        android:id="@+id/nav_settings"-->
+<!--        android:title="Settings" />-->
+<!--    <item-->
+<!--        android:id="@+id/nav_whatsNew"-->
+<!--        android:title="Whats new" />-->
+<!--    <item-->
+<!--        android:id="@+id/nav_help"-->
+<!--        android:title="Help" />-->
+<!--    <item-->
+<!--        android:id="@+id/nav_about"-->
+<!--        android:title="About us" />-->
+<!--    <item-->
+<!--        android:id="@+id/nav_rateus"-->
+<!--        android:title="Rate us" />-->
+</menu>
