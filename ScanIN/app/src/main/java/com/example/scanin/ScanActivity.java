@@ -73,9 +73,11 @@ import kotlin.collections.ArraysKt;
 import kotlin.jvm.internal.Intrinsics;
 
 public class ScanActivity extends AppCompatActivity
-        implements ImageGridFragment.ImageGridFragmentCallback, ImageEditFragment.ImageEditFragmentCallback {
+        implements ImageGridFragment.ImageGridFragmentCallback, ImageEditFragment.ImageEditFragmentCallback,
+        PdfFragment.PdfFragmentCallback {
     public ImageGridFragment imageGridFragment = null;
     public ImageEditFragment imageEditFragment = null;
+    public PdfFragment pdfFragment = null;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private Preview preview;
     ImageCapture imageCapture = null;
@@ -157,6 +159,7 @@ public class ScanActivity extends AppCompatActivity
 
         imageGridFragment = new ImageGridFragment();
         imageEditFragment = new ImageEditFragment();
+        pdfFragment = new PdfFragment();
 
         cameraProviderFuture = ProcessCameraProvider.getInstance((Context)this);
         outputDirectory = getOutputDirectory();
@@ -172,8 +175,10 @@ public class ScanActivity extends AppCompatActivity
             current_document_id = getIntent().getLongExtra("CURRENT_DOCUMENT_ID", -1);
             Log.d("Edit2_1", String.valueOf(current_document_id));
             readDocumentImages(current_document_id);
-        }else if(action == MachineActions.EDIT_PDF){
-
+        }else if(action == MachineActions.HOME_OPEN_PDF){
+            Log.d("PDF2", "open pdf 2");
+            current_document_id = getIntent().getLongExtra("CURRENT_DOCUMENT_ID", -1);
+            openPdfView(current_document_id);
         }else{
             finish();
         }
@@ -327,10 +332,23 @@ public class ScanActivity extends AppCompatActivity
         }
     }
 
+    public void pdfGoHome() {
+        Log.d ("ScanActvity", "pdf go home");
+        CurrentMachineState = -1;
+        super.onBackPressed();
+        overridePendingTransition(R.anim.trans_right_in, R.anim.trans_right_out);
+    }
+
     @Override
     public void onCreateGridCallback() {
         Log.d("onCreateGrid", "Called");
         imageGridFragment.setImagePathList(documentAndImageInfo);
+    }
+
+    @Override
+    public void onCreatePdfCallback() {
+        Log.d("onCreatePdf", "Called");
+        pdfFragment.setImagePathList(documentAndImageInfo);
     }
 
     @Override
@@ -341,6 +359,11 @@ public class ScanActivity extends AppCompatActivity
 //            Log.d(TAG, "Pos: " + String.valueOf(imageEditFragment.adapterPosition));
 //            imageEditFragment.recyclerView.scrollToPosition(imageEditFragment.adapterPosition);
 //        }
+    }
+
+    @Override
+    public void onClickPdfCallback (int action) {
+        StateChangeHelper.PdfActionChange(action, ScanActivity.this);
     }
 
     @Override
@@ -470,6 +493,20 @@ public class ScanActivity extends AppCompatActivity
         Document document = new Document(id, documentName);
         renameDoc(document, documentName);
         return document;
+    }
+
+    public void openPdfView (long id) {
+        disposable.add(Single.create(s->{
+            DocumentAndImageInfo temp = appDatabase.documentAndImageDao().loadDocumentAllImageInfo(id);
+            s.onSuccess(temp);
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(s->{
+                    documentAndImageInfo = (DocumentAndImageInfo) s;
+                    Log.d("Pdf2, ", String.valueOf(documentAndImageInfo.getImages().size()
+                            + String.valueOf(documentAndImageInfo.getDocument().getDocumentId())));
+                    StateChangeHelper.HomeActionChange(MachineActions.HOME_OPEN_PDF, ScanActivity.this);
+                }, Throwable::printStackTrace));
     }
 
     public void readDocumentImages(long id){
