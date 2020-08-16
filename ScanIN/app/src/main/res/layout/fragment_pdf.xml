@@ -46,7 +46,7 @@
                     android:padding="4dp"
                     android:layout_marginRight="10dp"
                     android:background="@drawable/img_position_background"
-                    android:src="@drawable/ic_edit_24px"
+                    android:src="@drawable/ic_edit_24px_white"
                     android:id="@+id/nav_edit"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintRight_toLeftOf="@id/nav_home"
@@ -59,10 +59,23 @@
                     android:padding="4dp"
                     android:layout_marginRight="10dp"
                     android:background="@drawable/img_position_background"
-                    android:src="@drawable/ic_share_24px"
+                    android:src="@drawable/ic_share_24px_white"
                     android:id="@+id/nav_share"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintRight_toLeftOf="@id/nav_edit"
+                    />
+
+                <ImageButton
+                    android:layout_width="45dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:padding="4dp"
+                    android:layout_marginRight="10dp"
+                    android:background="@drawable/img_position_background"
+                    android:src="@drawable/ic_baseline_refresh_24"
+                    android:id="@+id/nav_reload"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintRight_toLeftOf="@id/nav_share"
                     />
 
             </androidx.appcompat.widget.Toolbar>
@@ -74,6 +87,14 @@
                 app:layout_constraintBottom_toBottomOf="@id/my_awesome_toolbar"/>
 
         </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBarPdf"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            android:padding="100dp"
+            />
 
 
 

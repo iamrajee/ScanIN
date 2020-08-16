@@ -17,6 +17,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.barteksc.pdfviewer.PDFView;
@@ -77,6 +79,8 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
     private PDFView pdfView;
     Integer pageNumber = 0;
     String pdfFileName;
+    private Uri pdfUri;
+    ProgressBar progressBar;
 
     public PdfFragment() {
         // Required empty public constructor
@@ -137,12 +141,13 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
         }
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item, Toolbar toolbar) {
         switch (item.getItemId()) {
             case R.id.nav_quality:
                 return true;
             case R.id.nav_rename:
                 rename_doc();
+                toolbar.setTitle (documentAndImageInfo.getDocument().getDocumentName());
                 return true;
             case R.id.nav_grid:
                 Log.d ("FragmentPdf", "pdf reorder reached");
@@ -159,6 +164,14 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void showProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideProgressBar() {
+        progressBar.setVisibility(View.GONE);
     }
 
     private void rename_doc() {
@@ -271,22 +284,16 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
     }
 
     private void create_pdf_helper() {
+        showProgressBar();
         disposable.add(Single.create(s->{
             SaveFile.createPdfFromDocumentAndImageInfo(getActivity(), documentAndImageInfo, 1.0f);
             s.onSuccess(true);
         }).subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(s->{
-
                     Toast.makeText(getContext(), "Successfully saved pdf", Toast.LENGTH_LONG).show();
-                    pdfView.isBestQuality();
-
-                    File savedPDFDirectory = getActivity().getExternalFilesDir("saved_pdf");
-                    String fullName = savedPDFDirectory + "/" +
-                            documentAndImageInfo.getDocument().getDocumentName() + ".pdf";
-                    File fullFile = new File(fullName);
-                    displayFromUri(Uri.fromFile(fullFile));
-
+                    displayFromUri(pdfUri);
+                    hideProgressBar();
                 }, Throwable::printStackTrace));
 
 //        try {
@@ -305,11 +312,22 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
         ((ScanActivity)getActivity()).CurrentMachineState = this.CurrentMachineState;
 
         pdfView = rootView.findViewById(R.id.pdfView);
-
+        pdfView.isBestQuality();
         pdfFragmentCallback.onCreatePdfCallback();
-        //TextView fileName = rootView.findViewById(R.id.file_name_edit);
 
-        create_pdf_helper();
+        progressBar = rootView.findViewById(R.id.progressBarPdf);
+
+        File savedPDFDirectory = getActivity().getExternalFilesDir("saved_pdf");
+        String fullName = savedPDFDirectory + "/" +
+                documentAndImageInfo.getDocument().getDocumentName() + ".pdf";
+        File fullFile = new File(fullName);
+        pdfUri = Uri.fromFile(fullFile);
+
+        if (fullFile.exists()) {
+            displayFromUri(pdfUri);
+        } else {
+            create_pdf_helper();
+        }
 
         Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.my_awesome_toolbar);
         toolbar.inflateMenu(R.menu.pdf_menu);
@@ -320,7 +338,7 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
         toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                return onOptionsItemSelected(item);
+                return onOptionsItemSelected(item, toolbar);
             }
         });
 
@@ -342,6 +360,14 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
             @Override
             public void onClick(View view) {
 
+            }
+        });
+
+        ImageButton nav_reload = rootView.findViewById(R.id.nav_reload);
+        nav_reload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                create_pdf_helper();
             }
         });
 
