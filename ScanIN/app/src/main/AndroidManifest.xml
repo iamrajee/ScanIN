@@ -34,6 +34,15 @@
             android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden|screenSize"/>
         <activity android:name=".HomeModule.MainActivity"></activity>
+        <provider
+            android:name=".Utils.GenericFileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
     </application>
 
 </manifest>

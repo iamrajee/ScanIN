@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,6 +22,8 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.scanin.Utils.GenericFileProvider;
 import com.github.barteksc.pdfviewer.PDFView;
 
 import io.reactivex.Single;
@@ -31,6 +34,7 @@ import io.reactivex.schedulers.Schedulers;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.PopupMenu;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -73,14 +77,15 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
     private DocumentAndImageInfo documentAndImageInfo;
     int CurrentMachineState = -1;
     private Repository mRepository;
-    TextView textView, textView2, textView3;
     private final CompositeDisposable disposable = new CompositeDisposable();
-    public String quality_type = "normal";
     private PDFView pdfView;
-    Integer pageNumber = 0;
-    String pdfFileName;
+    private Integer pageNumber = 0;
+    private String pdfFileName;
+    private String fullName;
     private Uri pdfUri;
-    ProgressBar progressBar;
+    private ProgressBar progressBar;
+    private File fullFile;
+    private float qualityFactor = 1.0f;
 
     public PdfFragment() {
         // Required empty public constructor
@@ -144,6 +149,35 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
     public boolean onOptionsItemSelected(MenuItem item, Toolbar toolbar) {
         switch (item.getItemId()) {
             case R.id.nav_quality:
+                Toast.makeText(getContext(), "Higher quality creates larger files", Toast.LENGTH_LONG).show();
+                PopupMenu popup = new PopupMenu(Objects.requireNonNull(getContext()), toolbar, Gravity.RIGHT);
+                // This activity implements OnMenuItemClickListener
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.quality_very_low:
+                                qualityFactor = 0.5f;
+                                return true;
+                            case R.id.quality_low:
+                                qualityFactor = 0.75f;
+                                return true;
+                            case R.id.quality_normal:
+                                qualityFactor = 1.0f;
+                                return true;
+                            case R.id.quality_high:
+                                qualityFactor = 1.5f;
+                                return true;
+                            case R.id.quality_very_high:
+                                qualityFactor = 2.0f;
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
+                });
+                popup.inflate(R.menu.quality_menu);
+                popup.show();
                 return true;
             case R.id.nav_rename:
                 rename_doc();
@@ -283,10 +317,23 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
                 .load();
     }
 
+    protected void share_save_in_gallery () {
+        showProgressBar();
+        disposable.add(Single.create(s->{
+            SaveFile.saveInGallery(getActivity(), documentAndImageInfo);
+            s.onSuccess(true);
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(s->{
+                    Toast.makeText(getContext(), "Successfully saved all images in Pictures", Toast.LENGTH_LONG).show();
+                    hideProgressBar();
+                }, Throwable::printStackTrace));
+    }
+
     private void create_pdf_helper() {
         showProgressBar();
         disposable.add(Single.create(s->{
-            SaveFile.createPdfFromDocumentAndImageInfo(getActivity(), documentAndImageInfo, 1.0f);
+            SaveFile.createPdfFromDocumentAndImageInfo(getActivity(), documentAndImageInfo, qualityFactor);
             s.onSuccess(true);
         }).subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -304,6 +351,68 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
 //        }
     }
 
+    private void sendViaOtherApps() {
+        try {
+            Uri pdfURI = GenericFileProvider.getUriForFile(Objects.requireNonNull(getContext()),
+                    getContext().getApplicationContext().getPackageName() + ".provider", fullFile);
+            Log.d ("fragmentPdf", "pdfURI = " + pdfURI.toString());
+            String subject = documentAndImageInfo.getDocument().getDocumentName();
+            String message = documentAndImageInfo.getDocument().getDocumentName() + "\n" + "Please find attachment" +
+                    "\n\nCreated with ScanIN";
+            final Intent sendIntent = new Intent(Intent.ACTION_SEND);
+            sendIntent.setType("application/pdf");
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT,subject);
+            sendIntent.putExtra(Intent.EXTRA_STREAM, pdfURI);
+            sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            sendIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            sendIntent.putExtra(Intent.EXTRA_EMAIL, message);
+            // Verify that the intent will resolve to an activity
+            if (sendIntent.resolveActivity(
+                    Objects.requireNonNull(getActivity()).getPackageManager()) != null) {
+                this.startActivity(Intent.createChooser(sendIntent,"Sending ..."));
+            } else {
+                throw new Exception("Could not resolve activity.");
+            }
+        } catch (Throwable t) {
+            Toast.makeText(getContext(),
+                    "Request failed try again: " + t.toString(),
+                    Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    private void openViaOtherApps() {
+        try {
+            Uri pdfURI = GenericFileProvider.getUriForFile(Objects.requireNonNull(getContext()),
+                    getContext().getApplicationContext().getPackageName() + ".provider", fullFile);
+            Log.d ("fragmentPdf", "pdfURI = " + pdfURI.toString());
+//            String subject = documentAndImageInfo.getDocument().getDocumentName();
+//            String message = documentAndImageInfo.getDocument().getDocumentName() + "\n" + "Please find attachment" +
+//                    "\n\nCreated with ScanIN";
+            final Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+            sendIntent.setDataAndType(pdfURI, "application/pdf");
+//            sendIntent.putExtra(Intent.EXTRA_SUBJECT,subject);
+            sendIntent.putExtra(Intent.EXTRA_STREAM, pdfURI);
+            sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            sendIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+//            sendIntent.putExtra(Intent.EXTRA_EMAIL, message);
+            // Verify that the intent will resolve to an activity
+            if (sendIntent.resolveActivity(
+                    Objects.requireNonNull(getActivity()).getPackageManager()) != null) {
+                this.startActivity(Intent.createChooser(sendIntent,"Sending ..."));
+            } else {
+                throw new Exception("Could not resolve activity.");
+            }
+        } catch (Throwable t) {
+            Toast.makeText(getContext(),
+                    "Request failed try again: " + t.toString(),
+                    Toast.LENGTH_LONG).show();
+        }
+
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -318,9 +427,9 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
         progressBar = rootView.findViewById(R.id.progressBarPdf);
 
         File savedPDFDirectory = getActivity().getExternalFilesDir("saved_pdf");
-        String fullName = savedPDFDirectory + "/" +
+        fullName = savedPDFDirectory + "/" +
                 documentAndImageInfo.getDocument().getDocumentName() + ".pdf";
-        File fullFile = new File(fullName);
+        fullFile = new File(fullName);
         pdfUri = Uri.fromFile(fullFile);
 
         if (fullFile.exists()) {
@@ -359,7 +468,29 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
         rootView.findViewById(R.id.nav_share).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                PopupMenu popup = new PopupMenu(Objects.requireNonNull(getContext()), view);
 
+                // This activity implements OnMenuItemClickListener
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.share_other_apps:
+                                sendViaOtherApps();
+                                return true;
+                            case R.id.share_save_all:
+                                share_save_in_gallery();
+                                return true;
+                            case R.id.share_open_apps:
+                                openViaOtherApps();
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
+                });
+                popup.inflate(R.menu.share_menu);
+                popup.show();
             }
         });
 

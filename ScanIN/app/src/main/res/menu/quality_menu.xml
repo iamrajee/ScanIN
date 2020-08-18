@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pdf_quality_options">
+    <item
+        android:id="@+id/quality_very_low"
+        android:title="Very low" />
+    <item
+        android:id="@+id/quality_low"
+        android:title="Low" />
+    <item
+        android:id="@+id/quality_normal"
+        android:title="Normal" />
+    <item
+        android:id="@+id/quality_high"
+        android:title="High" />
+    <item
+        android:id="@+id/quality_very_high"
+        android:title="Very high" />
+</menu>

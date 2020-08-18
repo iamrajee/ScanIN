@@ -23,6 +23,7 @@ import com.example.scanin.DatabaseModule.ImageInfo;
 import com.example.scanin.HomeModule.MainActivity;
 import com.example.scanin.ImageDataModule.ImageData;
 import com.example.scanin.ImageDataModule.ImageEditUtil;
+import com.example.scanin.Utils.FileUtils;
 import com.squareup.picasso.Picasso;
 
 import org.opencv.core.Point;
@@ -30,9 +31,11 @@ import org.opencv.core.Point;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import static com.example.scanin.ImageDataModule.ImageData.rotateBitmap;
 import static com.example.scanin.ImageDataModule.ImageEditUtil.convertMap2ArrayList;
@@ -44,6 +47,7 @@ public class SaveFile {
 
     public static final int A4_width = 1050;
     public static final int A4_height = 1485;
+    private static final String FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS";
 
     public static final int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = MainActivity.WRITE_EXTERNAL_STORAGE_REQUEST_CODE;
 
@@ -168,6 +172,17 @@ public class SaveFile {
         bmp = ImageData.changeContrastAndBrightness(context, bmp, (float) imgInfo.getAlpha(),
                 (float) imgInfo.getBeta());
         return bmp;
+    }
+
+    public static void saveInGallery(Activity myActivity, DocumentAndImageInfo doc) throws IOException {
+        List<ImageInfo> images = doc.getImages();
+
+        for (ImageInfo img: images) {
+            Bitmap bmp = Picasso.get().load(img.getUri()).get();
+            bmp = prepareBitmap(myActivity, bmp, img);
+            String new_name = new SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis());
+            FileUtils.saveImage(myActivity, bmp, new_name);
+        }
     }
 
     public static void createPdfFromDocumentAndImageInfo(Activity myActivity, DocumentAndImageInfo doc, float quality)throws IOException {

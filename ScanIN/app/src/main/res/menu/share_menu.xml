@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pdf_quality_options">
+    <item
+        android:id="@+id/share_open_apps"
+        android:title="Open with" />
+    <item
+        android:id="@+id/share_other_apps"
+        android:title="Share with" />
+    <item
+        android:id="@+id/share_save_all"
+        android:title="Save in Pictures" />
+
+<!--    <item-->
+<!--        android:id="@+id/share_other_apps"-->
+<!--        android:title="Open with" />-->
+</menu>
