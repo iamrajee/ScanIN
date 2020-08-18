@@ -42,10 +42,10 @@ public class ImageInfo {
     @ColumnInfo(name="rotationConfig")
     private int rotationConfig;
 
-    @Ignore
+    @ColumnInfo(name="beta")
     private double beta;
 
-    @Ignore
+    @ColumnInfo(name="alpha")
     private double alpha;
 
     public ImageInfo(long document_id1, @NotNull Uri uri1, long position1){
