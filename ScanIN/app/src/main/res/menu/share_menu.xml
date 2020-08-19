@@ -5,8 +5,11 @@
         android:id="@+id/share_open_apps"
         android:title="Open with" />
     <item
-        android:id="@+id/share_other_apps"
-        android:title="Share with" />
+        android:id="@+id/share_pdf_other_apps"
+        android:title="Share pdf with" />
+    <item
+        android:id="@+id/share_images_other_apps"
+        android:title="Share images with" />
     <item
         android:id="@+id/share_save_all"
         android:title="Save in Pictures" />

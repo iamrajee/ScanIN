@@ -23,6 +23,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.scanin.DatabaseModule.ImageInfo;
 import com.example.scanin.Utils.GenericFileProvider;
 import com.github.barteksc.pdfviewer.PDFView;
 
@@ -55,6 +56,7 @@ import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.shockwave.pdfium.PdfDocument;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -351,14 +353,14 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
 //        }
     }
 
-    private void sendViaOtherApps() {
+    private void sendPdfViaOtherApps() {
         try {
             Uri pdfURI = GenericFileProvider.getUriForFile(Objects.requireNonNull(getContext()),
                     getContext().getApplicationContext().getPackageName() + ".provider", fullFile);
             Log.d ("fragmentPdf", "pdfURI = " + pdfURI.toString());
             String subject = documentAndImageInfo.getDocument().getDocumentName();
-            String message = documentAndImageInfo.getDocument().getDocumentName() + "\n" + "Please find attachment" +
-                    "\n\nCreated with ScanIN";
+            String message = "Please find attachment" +
+                    "\n\n(Created with ScanIN)";
             final Intent sendIntent = new Intent(Intent.ACTION_SEND);
             sendIntent.setType("application/pdf");
             sendIntent.putExtra(Intent.EXTRA_SUBJECT,subject);
@@ -380,6 +382,41 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
                     Toast.LENGTH_LONG).show();
         }
 
+    }
+
+    private void sendImagesViaOtherApps() {
+        try {
+            ArrayList <Uri> images_shareable_uri_list = new ArrayList<>();
+            for (ImageInfo img : documentAndImageInfo.getImages()) {
+                images_shareable_uri_list.add(
+                GenericFileProvider.getUriForFile(Objects.requireNonNull(getContext()),
+                        getContext().getApplicationContext().getPackageName() + ".provider",
+                        new File(Objects.requireNonNull(img.getUri().getPath()))));
+            }
+            String subject = documentAndImageInfo.getDocument().getDocumentName();
+            String message = "Please find attachments" +
+                    "\n\n(Created with ScanIN)";
+            final Intent sendIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            sendIntent.setType("text/plain");
+            sendIntent.setType("image/jpeg");
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT,subject);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, message);
+            sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, images_shareable_uri_list);
+            sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            sendIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            // Verify that the intent will resolve to an activity
+            if (sendIntent.resolveActivity(
+                    Objects.requireNonNull(getActivity()).getPackageManager()) != null) {
+                this.startActivity(Intent.createChooser(sendIntent,"Sending ..."));
+            } else {
+                throw new Exception("Could not resolve activity.");
+            }
+        } catch (Throwable t) {
+            Toast.makeText(getContext(),
+                    "Request failed try again: " + t.toString(),
+                    Toast.LENGTH_LONG).show();
+        }
     }
 
     private void openViaOtherApps() {
@@ -475,8 +512,11 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
                         switch (item.getItemId()) {
-                            case R.id.share_other_apps:
-                                sendViaOtherApps();
+                            case R.id.share_images_other_apps:
+                                sendImagesViaOtherApps();
+                                return true;
+                            case R.id.share_pdf_other_apps:
+                                sendPdfViaOtherApps();
                                 return true;
                             case R.id.share_save_all:
                                 share_save_in_gallery();
