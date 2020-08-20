@@ -111,4 +111,5 @@ dependencies {
     // If you want to use the GPU Filters
     implementation 'jp.co.cyberagent.android.gpuimage:gpuimage-library:1.4.1'
     implementation 'com.github.barteksc:android-pdf-viewer:2.8.2'
+    implementation 'com.github.woxthebox:draglistview:1.7.1'
 }

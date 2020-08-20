@@ -14,17 +14,28 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.util.Pair;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.scanin.DatabaseModule.Document;
 import com.example.scanin.DatabaseModule.DocumentAndImageInfo;
+import com.example.scanin.DatabaseModule.ImageInfo;
 import com.example.scanin.DatabaseModule.Repository;
 import com.example.scanin.StateMachineModule.MachineActions;
 import com.example.scanin.Utils.FileUtils;
+import com.woxthebox.draglistview.DragListView;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
+
+import io.reactivex.disposables.CompositeDisposable;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -37,15 +48,18 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-
+    private static final int NUM_IMAGES_ALLOWED = 10000;
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
     private String TAG = "GRID_FRAG";
     private DocumentAndImageInfo documentAndImageInfo;
-    RecyclerViewGridAdapter mAdapter = null;
+//    RecyclerViewGridAdapter mAdapter = null;
+    private RecyclerViewGridAdapter mAdapter = null;
+    private DragListView mDragListView = null;
     int CurrentMachineState = -1;
     private Repository mRepository;
+    private ArrayList<Pair<Long, String>> mItemArray;
 
     public ImageGridFragment() {
         // Required empty public constructor
@@ -104,16 +118,60 @@ public class ImageGridFragment extends Fragment implements RecyclerViewGridAdapt
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_image_grid, container, false);
         ((ScanActivity)getActivity()).CurrentMachineState = this.CurrentMachineState;
-        RecyclerView recyclerView = (RecyclerView)rootView.findViewById(R.id.recyclerview_grid);
-        recyclerView.setHasFixedSize(true);
+        mRepository = ((ScanActivity)getActivity()).getRepository();
+        mDragListView = (DragListView) rootView.findViewById(R.id.drag_list_view);
 
-        //use a linear layout manager
+        mDragListView.getRecyclerView().setVerticalScrollBarEnabled(true);
+//        mDragListView.getRecyclerView().setHorizontalScrollBarEnabled(true);
+
+        mItemArray = new ArrayList<>();
+        for (int i = 0; i < NUM_IMAGES_ALLOWED; i++) {
+            mItemArray.add(new Pair<>((long) i, "Item " + i));
+        }
+
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
-        recyclerView.setLayoutManager(layoutManager);
-        //set adapter
-        mAdapter = new RecyclerViewGridAdapter(documentAndImageInfo, this);
-        recyclerView.setAdapter(mAdapter);
+        mDragListView.setLayoutManager(layoutManager);
+        mAdapter = new RecyclerViewGridAdapter(documentAndImageInfo, this, mItemArray, R.id.grid_item, true);
+        mDragListView.setAdapter(mAdapter, true);
+        mDragListView.setCanDragHorizontally(true);
+//        mDragListView.setCanDragVertically(true);
+        mDragListView.setCustomDragItem(null);
+
+        mDragListView.setDragListListener(new DragListView.DragListListenerAdapter() {
+            @Override
+            public void onItemDragEnded(int fromPosition, int toPosition) {
+                if (fromPosition != toPosition) {
+                    for (int i = 0; i < documentAndImageInfo.getImages().size(); i++) {
+                        Log.d ("fragmentGrid", "" + i + " = " +
+                                documentAndImageInfo.getImages().get(i).getPosition());
+                    }
+                    List<ImageInfo> images = documentAndImageInfo.getImages();
+                    if (fromPosition < toPosition) {
+                        images.add (toPosition + 1, images.get(fromPosition));
+                        images.remove(fromPosition);
+                    } else {
+                        images.add (toPosition, images.get(fromPosition));
+                        images.remove(fromPosition + 1);
+                    }
+                    for (int i = min (fromPosition, toPosition); i <= max(fromPosition, toPosition); i++) {
+                        images.get(i).setPosition(i + 1);
+                        mRepository.updateImage(images.get(i));
+                    }
+                    for (int i = 0; i < documentAndImageInfo.getImages().size(); i++) {
+                        Log.d ("fragmentGrid", "" + i + " = " +
+                                documentAndImageInfo.getImages().get(i).getPosition());
+                    }
+                }
+            }
+        });
+
         imageGridFragmentCallback.onCreateGridCallback();
+
+        for (int i = 0; i < documentAndImageInfo.getImages().size(); i++) {
+            Log.d ("fragmentGrid", "" + i + " = " +
+                    documentAndImageInfo.getImages().get(i).getPosition());
+        }
+
         TextView fileName = rootView.findViewById(R.id.file_name_edit);
         if (documentAndImageInfo != null)
             fileName.setText(documentAndImageInfo.getDocument().getDocumentName());

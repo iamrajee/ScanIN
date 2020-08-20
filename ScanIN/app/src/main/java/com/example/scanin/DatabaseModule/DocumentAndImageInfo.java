@@ -1,11 +1,14 @@
 package com.example.scanin.DatabaseModule;
 
+import android.util.Log;
+
 import androidx.room.Embedded;
 import androidx.room.Ignore;
 import androidx.room.Relation;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class DocumentAndImageInfo {
@@ -30,11 +33,18 @@ public class DocumentAndImageInfo {
         this.images = new ArrayList<>(Collections.singletonList(images));
     }
 
+    @Ignore
+    boolean sorted = false;
+
     public Document getDocument() {
         return document;
     }
 
     public List<ImageInfo> getImages() {
+        if (!sorted) {
+            Collections.sort(images, (imageInfo, t1) -> (int) (imageInfo.getPosition() - t1.getPosition()));
+            sorted = true;
+        }
         return images;
     }
 }

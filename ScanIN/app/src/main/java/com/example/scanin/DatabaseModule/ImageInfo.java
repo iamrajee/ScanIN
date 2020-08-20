@@ -22,6 +22,7 @@ public class ImageInfo {
     @PrimaryKey(autoGenerate = true)
     private long image_id;
 
+    @ColumnInfo(name="position")
     private long position;
 
     @ColumnInfo(name="uri")
