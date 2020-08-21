@@ -64,7 +64,6 @@ public class FileUtils {
             bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
             outputStream.flush();
             outputStream.close();
-            //bmp.recycle();
 
             ExifInterface newExif = new ExifInterface(newFile.getAbsolutePath());
             newExif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(ExifInterface.ORIENTATION_ROTATE_90));

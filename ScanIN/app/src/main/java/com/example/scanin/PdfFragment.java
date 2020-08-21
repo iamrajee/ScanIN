@@ -57,6 +57,7 @@ import com.shockwave.pdfium.PdfDocument;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -329,7 +330,11 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
                 .subscribe(s->{
                     Toast.makeText(getContext(), "Successfully saved all images in Pictures", Toast.LENGTH_LONG).show();
                     hideProgressBar();
-                }, Throwable::printStackTrace));
+                }, s->{
+                    Toast.makeText(getContext(), "Could not save: " + s.toString(), Toast.LENGTH_LONG).show();
+                    hideProgressBar();
+                    s.printStackTrace();
+                }));
     }
 
     private void create_pdf_helper() {
@@ -343,14 +348,10 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
                     Toast.makeText(getContext(), "Successfully saved pdf", Toast.LENGTH_LONG).show();
                     displayFromUri(pdfUri);
                     hideProgressBar();
-                }, Throwable::printStackTrace));
-
-//        try {
-//            SaveFile.createPdfFromDocumentAndImageInfo(getActivity(), documentAndImageInfo);
-//            Toast.makeText(getContext(), "Successfully saved pdf", Toast.LENGTH_SHORT).show();
-//        } catch (Exception e) {
-//            Toast.makeText(getContext(), "Failed in creating pdf", Toast.LENGTH_SHORT).show();
-//        }
+                }, s->{
+                    Toast.makeText(getContext(), "Could not load pdf: " + s.toString(), Toast.LENGTH_LONG).show();
+                    s.printStackTrace();
+                }));
     }
 
     private void sendPdfViaOtherApps() {
@@ -384,39 +385,50 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
 
     }
 
+    @SuppressWarnings("unchecked")
     private void sendImagesViaOtherApps() {
-        try {
-            ArrayList <Uri> images_shareable_uri_list = new ArrayList<>();
-            for (ImageInfo img : documentAndImageInfo.getImages()) {
-                images_shareable_uri_list.add(
-                GenericFileProvider.getUriForFile(Objects.requireNonNull(getContext()),
-                        getContext().getApplicationContext().getPackageName() + ".provider",
-                        new File(Objects.requireNonNull(img.getUri().getPath()))));
-            }
-            String subject = documentAndImageInfo.getDocument().getDocumentName();
-            String message = "Please find attachments" +
-                    "\n\n(Created with ScanIN)";
-            final Intent sendIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
-            sendIntent.setType("text/plain");
-            sendIntent.setType("image/jpeg");
-            sendIntent.putExtra(Intent.EXTRA_SUBJECT,subject);
-            sendIntent.putExtra(Intent.EXTRA_TEXT, message);
-            sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, images_shareable_uri_list);
-            sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            sendIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            // Verify that the intent will resolve to an activity
-            if (sendIntent.resolveActivity(
-                    Objects.requireNonNull(getActivity()).getPackageManager()) != null) {
-                this.startActivity(Intent.createChooser(sendIntent,"Sending ..."));
-            } else {
-                throw new Exception("Could not resolve activity.");
-            }
-        } catch (Throwable t) {
-            Toast.makeText(getContext(),
-                    "Request failed try again: " + t.toString(),
-                    Toast.LENGTH_LONG).show();
-        }
+        showProgressBar();
+        disposable.add(Single.create(s->{
+            s.onSuccess(SaveFile.prepareImagesForSharing(getActivity(), documentAndImageInfo));
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(s->{
+                    hideProgressBar();
+                    List <File> original_file_list = (List<File>)s;
+                    ArrayList <Uri> images_shareable_uri_list = new ArrayList<>();
+
+                    for (File img : original_file_list) {
+                        images_shareable_uri_list.add(
+                                GenericFileProvider.getUriForFile(Objects.requireNonNull(getContext()),
+                                        getContext().getApplicationContext().getPackageName() + ".provider",
+                                        img));
+                    }
+                    String subject = documentAndImageInfo.getDocument().getDocumentName();
+                    String message = "Please find attachments" +
+                            "\n\n(Created with ScanIN)";
+                    final Intent sendIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                    sendIntent.setType("text/plain");
+                    sendIntent.setType("image/jpeg");
+                    sendIntent.putExtra(Intent.EXTRA_SUBJECT,subject);
+                    sendIntent.putExtra(Intent.EXTRA_TEXT, message);
+                    sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, images_shareable_uri_list);
+                    sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    sendIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    // Verify that the intent will resolve to an activity
+                    if (sendIntent.resolveActivity(
+                            Objects.requireNonNull(getActivity()).getPackageManager()) != null) {
+                        this.startActivity(Intent.createChooser(sendIntent,"Sending ..."));
+                    } else {
+                        throw new Exception("Could not resolve activity.");
+                    }
+
+                }, s->{
+                    hideProgressBar();
+                    Toast.makeText(getContext(), "Send images failed: " + s.toString(), Toast.LENGTH_LONG).show();
+                    s.printStackTrace();
+                    }));
+//                        Throwable::printStackTrace));
     }
 
     private void openViaOtherApps() {

@@ -8,8 +8,10 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 import static java.lang.Math.min;
@@ -34,6 +36,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
@@ -117,6 +120,21 @@ public class SaveFile {
         }
     }
 
+    public static List <File> prepareImagesForSharing (Activity myActivity,
+            DocumentAndImageInfo documentAndImageInfo) throws IOException{
+        File pictureDirectory = ((ScanActivity)myActivity).getOutputDirectory();
+        List<File> resImageFileList = new LinkedList<>();
+        for (ImageInfo img : documentAndImageInfo.getImages()) {
+            Bitmap bmp = Picasso.get().load(img.getUri()).get();
+            bmp = prepareBitmap(myActivity, bmp, img);
+            String newName = new SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis());
+            File fullFile = new File(pictureDirectory + newName + ".jpg");
+            FileUtils.saveFile(fullFile, bmp);
+            resImageFileList.add (fullFile);
+        }
+        return resImageFileList;
+    }
+
     public static void savePDF(Activity myActivity, PdfDocument document, String pdf_name) throws IOException {
 
         String externalStorageState = Environment.getExternalStorageState();
@@ -152,7 +170,11 @@ public class SaveFile {
 
         // if nothing in database
         if (points == null) {
-            points = convertMap2ArrayList(getDefaultPoints(width, height));
+            if (imgInfo.getRotationConfig() == 0 || imgInfo.getRotationConfig() == 2) {
+                points = convertMap2ArrayList(getDefaultPoints(width, height));
+            } else {
+                points = convertMap2ArrayList(getDefaultPoints(height, width));
+            }
             //currentImg.setCropPosition(points);
             // if database has cropPoints in orig config. Convert to the current rotation config.
         } else {
