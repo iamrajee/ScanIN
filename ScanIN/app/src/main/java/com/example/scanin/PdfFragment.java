@@ -161,18 +161,23 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
                         switch (item.getItemId()) {
                             case R.id.quality_very_low:
                                 qualityFactor = 0.5f;
+                                create_pdf_helper();
                                 return true;
                             case R.id.quality_low:
                                 qualityFactor = 0.75f;
+                                create_pdf_helper();
                                 return true;
                             case R.id.quality_normal:
                                 qualityFactor = 1.0f;
+                                create_pdf_helper();
                                 return true;
                             case R.id.quality_high:
                                 qualityFactor = 1.5f;
+                                create_pdf_helper();
                                 return true;
                             case R.id.quality_very_high:
                                 qualityFactor = 2.0f;
+                                create_pdf_helper();
                                 return true;
                             default:
                                 return false;
@@ -349,6 +354,7 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
                     displayFromUri(pdfUri);
                     hideProgressBar();
                 }, s->{
+                    hideProgressBar();
                     Toast.makeText(getContext(), "Could not load pdf: " + s.toString(), Toast.LENGTH_LONG).show();
                     s.printStackTrace();
                 }));
