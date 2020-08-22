@@ -6,7 +6,17 @@
     android:layout_gravity="center"
     android:orientation="horizontal">
 
-    <ImageView
+<!--    <ImageView-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:paddingBottom="0dp"-->
+<!--        android:padding="10dp"-->
+<!--        android:scaleType="fitXY"-->
+
+<!--        android:adjustViewBounds="true"-->
+<!--        android:id="@+id/image_edit_item"/>-->
+
+    <com.github.chrisbanes.photoview.PhotoView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingBottom="0dp"

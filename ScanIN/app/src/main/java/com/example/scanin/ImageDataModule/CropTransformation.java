@@ -15,13 +15,15 @@ import java.util.Map;
 
 import static com.example.scanin.ImageDataModule.ImageEditUtil.cropRequired;
 import static com.example.scanin.ImageDataModule.ImageEditUtil.getScale;
+import static com.example.scanin.ImageDataModule.ImageEditUtil.rotateCropPoints;
 import static com.example.scanin.ImageDataModule.ImageEditUtil.scalePoints;
 
 public class CropTransformation implements Transformation {
     private Map<Integer, PointF> cropPoints;
-
-    public CropTransformation(Map<Integer, PointF> cropPoints) {
+    private int rotationConfig;
+    public CropTransformation(Map<Integer, PointF> cropPoints, int rotationConfig) {
         this.cropPoints = cropPoints;
+        this.rotationConfig = rotationConfig;
     }
 
     @Override
@@ -39,6 +41,11 @@ public class CropTransformation implements Transformation {
             Log.d("Transformation", "crop transformation code used.");
             float scale = getScale(width, height);
             cropPoints = scalePoints(cropPoints, scale);
+            int iter = 0;
+            while (iter != rotationConfig) {
+                cropPoints = rotateCropPoints(cropPoints, width, height, iter);
+                iter += 1;
+            }
             Mat imgToProcess = new Mat(bitmap.getWidth(), bitmap.getHeight(), CvType.CV_8UC(4));
             Utils.bitmapToMat(bitmap, imgToProcess);
             Mat outMat = new Mat();
@@ -63,7 +70,7 @@ public class CropTransformation implements Transformation {
     @Override
     public String key() {
         if (this.cropPoints == null) {
-            return "null";
+            return "null " + rotationConfig;
         } else {
             StringBuilder res = new StringBuilder();
             for (int i = 0; i < 4; i++) {
@@ -71,6 +78,7 @@ public class CropTransformation implements Transformation {
                 float y = this.cropPoints.get(i).y;
                 res.append(Float.toString(x)).append(" ").append(Float.toString(y)).append(" ");
             }
+            res.append(" ").append(rotationConfig);
             return res.toString();
         }
     }

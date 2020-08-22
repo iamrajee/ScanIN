@@ -23,6 +23,7 @@ import com.example.scanin.ImageDataModule.ContrastFilterTransformation1;
 import com.example.scanin.ImageDataModule.CropTransformation;
 import com.example.scanin.ImageDataModule.FilterTransformation;
 import com.example.scanin.ImageDataModule.ImageEditUtil;
+import com.github.chrisbanes.photoview.PhotoView;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
@@ -37,7 +38,7 @@ public class RecyclerViewEditAdapter extends RecyclerView.Adapter<RecyclerViewEd
     public static final int MAX_HEIGHT = 2000;
     public int imgPosition;
     public class EditViewHolder extends RecyclerView.ViewHolder {
-        ImageView imageView;
+        PhotoView imageView;
         public EditViewHolder(View view){
             super(view);
             imageView =view.findViewById(R.id.image_edit_item);
@@ -143,13 +144,14 @@ public class RecyclerViewEditAdapter extends RecyclerView.Adapter<RecyclerViewEd
 
         holder.imageView.setTag(target);
         Picasso.get().load(uri)
-                .transform(new CropTransformation(imageInfo.getCropPositionMap()))
+                .transform(new CropTransformation(imageInfo.getCropPositionMap(), imageInfo.getRotationConfig()))
                 .transform(new FilterTransformation(ImageEditUtil.getFilterName(imageInfo.getFilterId())))
                 .resize(size, size)
+                .rotate(imageInfo.getRotationConfig() * 90f)
                 .centerInside()
                 .into(target);
 
-        holder.imageView.setRotation(90f*imageInfo.getRotationConfig());
+//        holder.imageView.setRotation(90f*imageInfo.getRotationConfig());
         if(position != getItemCount() - 1){
 
 //            Picasso.with()

@@ -836,10 +836,11 @@ public class ImageEditFragment extends Fragment {
             int size = (int) Math.ceil(Math.sqrt(RecyclerViewEditAdapter.MAX_WIDTH * RecyclerViewEditAdapter.MAX_HEIGHT));
 
             Picasso.get().load(imageInfo.getUri())
-                    .transform(new CropTransformation(imageInfo.getCropPositionMap()))
+                    .transform(new CropTransformation(imageInfo.getCropPositionMap(), imageInfo.getRotationConfig()))
                     .transform(new FilterTransformation(ImageEditUtil.getFilterName(imageInfo.getFilterId())))
                     .resize(size, size)
                     .centerInside()
+                    .rotate(imageInfo.getRotationConfig())
                     .into(target);
 
         });
