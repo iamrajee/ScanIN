@@ -28,7 +28,12 @@ import com.example.scanin.ImageDataModule.ImageEditUtil;
 import com.example.scanin.Utils.FileUtils;
 import com.squareup.picasso.Picasso;
 
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -233,7 +238,8 @@ public class SaveFile {
                     A4_height_final, pageNumber).create();
 
             Double scale = min((double) A4_width_final / bmp.getWidth(), (double) A4_height_final / bmp.getHeight());
-            bmp = Bitmap.createScaledBitmap(bmp, (int) (bmp.getWidth() * scale), (int) (bmp.getHeight() * scale), false);
+//            bmp = Bitmap.createScaledBitmap(bmp, (int) (bmp.getWidth() * scale), (int) (bmp.getHeight() * scale), false);
+            bmp = createScaledBitmap (bmp, (int) (bmp.getWidth() * scale), (int) (bmp.getHeight() * scale));
 
             PdfDocument.Page page = document.startPage(pageInfo);
 
@@ -271,6 +277,27 @@ public class SaveFile {
                     WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
         }
         document.close();
+    }
+
+    public static Bitmap createScaledBitmap (Bitmap bmp, int width, int height) {
+        int cwidth = bmp.getWidth();
+        int cheight = bmp.getHeight();
+        if (cwidth > width) {
+            Mat imgToProcess = new Mat(cwidth, cheight, CvType.CV_8UC(4));
+            Mat finalImage = new Mat(width, height, CvType.CV_8UC(4));
+            Utils.bitmapToMat(bmp, imgToProcess);
+            Imgproc.resize(imgToProcess, finalImage, new Size(width, height), Imgproc.INTER_AREA);
+            bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(finalImage, bmp);
+        } else {
+            Mat imgToProcess = new Mat(cwidth, cheight, CvType.CV_8UC(4));
+            Mat finalImage = new Mat(width, height, CvType.CV_8UC(4));
+            Utils.bitmapToMat(bmp, imgToProcess);
+            Imgproc.resize(imgToProcess, finalImage, new Size(width, height), Imgproc.INTER_LANCZOS4);
+            bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(finalImage, bmp);
+        }
+        return bmp;
     }
 
     public static void createPdfFromListOfBitmap(Activity myActivity,
