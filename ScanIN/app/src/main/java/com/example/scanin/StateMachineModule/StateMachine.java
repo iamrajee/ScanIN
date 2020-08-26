@@ -33,18 +33,21 @@ public class StateMachine {
         put(MachineActions.REORDER,  MachineStates.GRID_1);
         put(MachineActions.BACK, MachineStates.CAMERA);
         put(MachineActions.EDIT_ADD_MORE, MachineStates.CAMERA);
+        put(MachineActions.EDIT_OPEN_PDF, MachineStates.PDF2);
     }};
 
     static Map<Integer, Integer> EDIT2_ACTION_NEXT = new HashMap<Integer, Integer>(){{
         put(MachineActions.REORDER, MachineStates.GRID_2);
         put(MachineActions.BACK, MachineStates.ABORT);
         put(MachineActions.EDIT_ADD_MORE, MachineStates.CAMERA);
+        put(MachineActions.EDIT_OPEN_PDF, MachineStates.PDF2);
     }};
 
     static Map<Integer, Integer> EDIT3_ACTION_NEXT = new HashMap<Integer, Integer>(){{
         put(MachineActions.REORDER, MachineStates.GRID_2);
         put(MachineActions.BACK, MachineStates.PDF2);
         put(MachineActions.EDIT_ADD_MORE, MachineStates.CAMERA);
+        put(MachineActions.EDIT_OPEN_PDF, MachineStates.PDF2);
     }};
 
     static Map<Integer, Integer> GRID1_ACTION_NEXT = new HashMap<Integer, Integer>() {{

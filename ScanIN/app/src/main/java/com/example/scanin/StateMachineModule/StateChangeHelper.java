@@ -87,6 +87,12 @@ public class StateChangeHelper {
                         .remove(context.imageEditFragment)
                         .add(R.id.fragment_grid, context.imageGridFragment)
                         .commit();
+            }else if (nextState.equals(MachineStates.PDF1) || nextState.equals(MachineStates.PDF2)) {
+                context.pdfFragment.setCurrentMachineState(nextState);
+                context.getSupportFragmentManager().beginTransaction()
+                        .remove(context.imageEditFragment)
+                        .add(R.id.fragment_pdf, context.pdfFragment)
+                        .commit();
             }
         }else if(context.CurrentMachineState == MachineStates.EDIT_2){
             if(nextState.equals(MachineStates.CAMERA)){
@@ -100,6 +106,12 @@ public class StateChangeHelper {
                 context.getSupportFragmentManager().beginTransaction()
                         .remove(context.imageEditFragment)
                         .add(R.id.fragment_grid, context.imageGridFragment)
+                        .commit();
+            } else if (nextState.equals(MachineStates.PDF1) || nextState.equals(MachineStates.PDF2)) {
+                context.pdfFragment.setCurrentMachineState(nextState);
+                context.getSupportFragmentManager().beginTransaction()
+                        .remove(context.imageEditFragment)
+                        .add(R.id.fragment_pdf, context.pdfFragment)
                         .commit();
             }
         } else if (context.CurrentMachineState == MachineStates.EDIT_3) {

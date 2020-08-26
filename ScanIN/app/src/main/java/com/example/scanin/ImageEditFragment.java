@@ -535,6 +535,14 @@ public class ImageEditFragment extends Fragment {
             }
         });
 
+        rootView.findViewById(R.id.apply_edits).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                view.setClickable(false);
+                imageEditFragmentCallback.onClickEditCallback(MachineActions.EDIT_OPEN_PDF);
+            }
+        });
+
         rootView.findViewById(R.id.discard).setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {

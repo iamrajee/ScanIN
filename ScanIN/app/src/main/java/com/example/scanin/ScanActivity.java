@@ -21,14 +21,21 @@ import android.util.Size;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
+import androidx.camera.core.CameraControl;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.FocusMeteringAction;
+import androidx.camera.core.FocusMeteringResult;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.MeteringPoint;
+import androidx.camera.core.MeteringPointFactory;
 import androidx.camera.core.Preview;
+import androidx.camera.core.SurfaceOrientedMeteringPointFactory;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
@@ -63,6 +70,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
@@ -126,10 +134,24 @@ public class ScanActivity extends AppCompatActivity
                                 + String.valueOf(i) + ".jpg");
                         try {
                             photoFile.createNewFile();
-                            FileUtils.copyFile(this, photoFile, imageUri);
+
+                            disposable.add(Single.create(e -> {
+                                FileUtils.copyFile(this, photoFile, imageUri);
+                                e.onSuccess(true);
+                            })
+                                    .subscribeOn(Schedulers.single())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(s -> {
+
+                                            },
+                                            e -> {
+                                                throw new Exception(e);
+                                            }));
                         } catch (Exception e) {
                             e.printStackTrace();
+                            Toast.makeText(this, "Copy error: " + e.toString(), Toast.LENGTH_LONG).show();
                             Log.e ("ScanActivity", e.getMessage());
+                            onBackPressed();
                         }
 
                         uri_list.add(Uri.fromFile(photoFile));
@@ -138,6 +160,7 @@ public class ScanActivity extends AppCompatActivity
                     if (documentAndImageInfo != null) {
                         position = documentAndImageInfo.getImages().size();
                     }
+                    Toast.makeText(this, "Saving images. Please wait...", Toast.LENGTH_LONG).show();
                     saveImageInfo(uri_list, position);
                 }
             } else if(data.getData() != null) {
@@ -270,6 +293,27 @@ public class ScanActivity extends AppCompatActivity
                 .build();
         preview.setSurfaceProvider(previewView.createSurfaceProvider());
         this.camera = cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imageCapture);
+
+
+//        CameraControl cameraControl = camera.getCameraControl();
+//        final MeteringPointFactory factory = previewView.createMeteringPointFactory(cameraSelector);
+//        final MeteringPoint point = factory.createPoint(event.getX(), event.getY());
+//        FocusMeteringAction action = new FocusMeteringAction.Builder(point, FocusMeteringAction.FLAG_AF)
+//                .addPoint(point, FocusMeteringAction.FLAG_AE) // could have many
+//                // auto calling cancelFocusAndMetering in 5 seconds
+//                .setAutoCancelDuration(5, TimeUnit.SECONDS)
+//                .build();
+//        cameraControl.startFocusAndMetering(action);
+
+//        ListenableFuture future = cameraControl.startFocusAndMetering(action);
+//        future.addListener( () -> {
+//            try {
+//                FocusMeteringResult result = (FocusMeteringResult) future.get();
+//                // process the result
+//            } catch (Exception e) {
+//            }
+//        } , executor);
+
         Log.d(TAG, "Camera bind done");
     }
 

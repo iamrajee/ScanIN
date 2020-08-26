@@ -15,6 +15,7 @@ public class MachineActions {
     public static final int GRID_OPEN_PDF = 110;
     public static final int PDF_REORDER = 112;
     public static final int PDF_GO_HOME = 113;
+    public static final int EDIT_OPEN_PDF = 114;
     public static final int NO_ACTION = 199;
 
 }

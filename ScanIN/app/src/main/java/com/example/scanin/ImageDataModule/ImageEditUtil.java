@@ -17,6 +17,8 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import com.squareup.picasso.Picasso;
+
 import org.opencv.core.Point;
 
 import java.io.ByteArrayOutputStream;
@@ -215,6 +217,10 @@ public class ImageEditUtil {
             e.printStackTrace();
         }
         return temp;
+    };
+
+    public static Bitmap loadBitmap (Uri fileName) throws Exception {
+        return (Bitmap) (Picasso.get().load(fileName).get());
     };
 
     public static native void getTestGray (long imgAddr, long grayImgAddr);

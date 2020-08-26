@@ -74,26 +74,20 @@ public class FileUtils {
         }
     }
 
-    public static void copyFile (Context context, File newFile, Uri galleryUri) {
-        try {
-            Bitmap bmp = ImageEditUtil.loadBitmap(context, galleryUri);
-            //Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), galleryUri);
-            bmp = ImageData.rotateBitmap(bmp, 270f);
-            FileOutputStream outputStream = new FileOutputStream(newFile);
-            // significant speed loss in PNG
-            bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-            outputStream.flush();
-            outputStream.close();
-            bmp.recycle();
+    public static void copyFile (Context context, File newFile, Uri galleryUri) throws Exception{
+        Bitmap bmp = ImageEditUtil.loadBitmap(galleryUri);
+        //Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), galleryUri);
+        bmp = ImageData.rotateBitmap(bmp, 270f);
+        FileOutputStream outputStream = new FileOutputStream(newFile);
+        // significant speed loss in PNG
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        outputStream.flush();
+        outputStream.close();
+        bmp.recycle();
 
-            ExifInterface newExif = new ExifInterface(newFile.getAbsolutePath());
-            newExif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(ExifInterface.ORIENTATION_ROTATE_90));
-            newExif.saveAttributes();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.e("ScanActivity", e.getMessage());
-        }
+        ExifInterface newExif = new ExifInterface(newFile.getAbsolutePath());
+        newExif.setAttribute(ExifInterface.TAG_ORIENTATION, String.valueOf(ExifInterface.ORIENTATION_ROTATE_90));
+        newExif.saveAttributes();
     }
 
     // saves in Pictures
