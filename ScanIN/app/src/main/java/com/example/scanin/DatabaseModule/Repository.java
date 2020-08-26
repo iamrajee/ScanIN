@@ -12,10 +12,12 @@ import java.util.List;
 import java.util.Objects;
 
 import io.reactivex.Completable;
+import io.reactivex.CompletableObserver;
 import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class Repository {
@@ -133,7 +135,23 @@ public class Repository {
             }
             s.onComplete();
         }).subscribeOn(Schedulers.io())
-                .subscribe();
+                .subscribe(new CompletableObserver() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e ("Repository", "Can't find image to be deleted" + e.toString());
+                        e.printStackTrace();
+                    }
+                });
     }
 
     public boolean deleteImageFromFile(Uri uri){
