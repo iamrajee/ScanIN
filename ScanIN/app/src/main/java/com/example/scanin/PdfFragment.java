@@ -375,7 +375,9 @@ public class PdfFragment extends Fragment implements RecyclerViewGridAdapter.Gri
             sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             sendIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             sendIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            sendIntent.putExtra(Intent.EXTRA_EMAIL, message);
+            sendIntent.putExtra(Intent.EXTRA_EMAIL, message); 
+            sendIntent.putExtra(Intent.EXTRA_TEXT, message);
+
             // Verify that the intent will resolve to an activity
             if (sendIntent.resolveActivity(
                     Objects.requireNonNull(getActivity()).getPackageManager()) != null) {

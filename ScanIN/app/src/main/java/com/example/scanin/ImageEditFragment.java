@@ -687,26 +687,31 @@ public class ImageEditFragment extends Fragment {
                             .transform(new FilterTransformation("original_filter"))
                             .fit()
                             .centerCrop()
+                            .rotate(documentAndImageInfo.getImages().get(adapterPosition).getRotationConfig() * 90f)
                             .into(original_filter_view);
                     Picasso.get().load(documentAndImageInfo.getImages().get(adapterPosition).getUri())
                             .transform(new FilterTransformation("magic_filter"))
                             .fit()
                             .centerCrop()
+                            .rotate(documentAndImageInfo.getImages().get(adapterPosition).getRotationConfig() * 90f)
                             .into(magic_filter_view);
                     Picasso.get().load(documentAndImageInfo.getImages().get(adapterPosition).getUri())
                             .transform(new FilterTransformation("sharpen_filter"))
                             .fit()
                             .centerCrop()
+                            .rotate(documentAndImageInfo.getImages().get(adapterPosition).getRotationConfig() * 90f)
                             .into(sharpen_filter_view);
                     Picasso.get().load(documentAndImageInfo.getImages().get(adapterPosition).getUri())
                             .transform(new FilterTransformation("dark_magic_filter"))
                             .fit()
                             .centerCrop()
+                            .rotate(documentAndImageInfo.getImages().get(adapterPosition).getRotationConfig() * 90f)
                             .into(dark_magic_filter_view);
                     Picasso.get().load(documentAndImageInfo.getImages().get(adapterPosition).getUri())
                             .transform(new FilterTransformation("gray_filter"))
                             .fit()
                             .centerCrop()
+                            .rotate(documentAndImageInfo.getImages().get(adapterPosition).getRotationConfig() * 90f)
                             .into(gray_filter_view);
                     filterVisible = true;
                 }

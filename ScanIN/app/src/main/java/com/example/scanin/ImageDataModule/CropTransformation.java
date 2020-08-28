@@ -37,6 +37,12 @@ public class CropTransformation implements Transformation {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
 
+        if (rotationConfig == 1 || rotationConfig == 3) {
+            int temp = height;
+            height = width;
+            width = temp;
+        }
+
         if (cropRequired(this.cropPoints, width, height)) {
             Log.d("Transformation", "crop transformation code used.");
             float scale = getScale(width, height);
