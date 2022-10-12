@@ -1,4 +1,4 @@
-# Sample OpenCV NDK integration app:
+# Sample OpenCV NDK integration app
 
 To setup the same project in your system first download the opencv sdk from this link:
 
